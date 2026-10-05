@@ -1,0 +1,4 @@
+useNodeVersion: 22.23.3
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
