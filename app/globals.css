@@ -1206,3 +1206,68 @@ footer small {
     font-size: 14px;
   }
 }
+
+/* Account actions: only the header is affected. */
+.header-account-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.header-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 43px;
+  padding: 0 15px;
+  border: 1px solid #bfc2b9;
+  border-radius: 4px;
+  background: transparent;
+  color: #252823;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.header-logout:hover:not(:disabled) {
+  background: #f0f1eb;
+}
+.header-logout:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+@media (min-width: 761px) and (max-width: 1200px) {
+  .header {
+    height: auto;
+    min-height: 104px;
+    flex-wrap: wrap;
+    padding-top: 18px;
+    gap: 16px;
+  }
+  .header nav {
+    order: 3;
+    flex-basis: 100%;
+    height: 43px;
+    justify-content: center;
+  }
+}
+@media (max-width: 760px) {
+  .header-account-actions {
+    gap: 8px;
+  }
+  .header-logout {
+    height: 37px;
+    padding: 0 10px;
+    font-size: 11px;
+    gap: 6px;
+  }
+}
+@media (max-width: 460px) {
+  .header-account-actions:has(.header-logout) {
+    flex-basis: 100%;
+  }
+}

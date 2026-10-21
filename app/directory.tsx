@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import {
   ArrowUpRight,
@@ -8,6 +9,7 @@ import {
   Search,
   Bookmark,
   Plus,
+  LogOut,
   MapPin,
   SlidersHorizontal,
   X,
@@ -21,6 +23,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { categories, demoDesigners, type Designer } from "./data";
 export default function Directory() {
+  const router = useRouter();
+  const logoutPending = useRef(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  async function handleLogout() {
+    if (logoutPending.current) return;
+    logoutPending.current = true;
+    setLoggingOut(true);
+    try {
+      await signOut({ redirectTo: "/" });
+    } catch {
+      logoutPending.current = false;
+      setLoggingOut(false);
+      setMessage("ログアウトできませんでした。もう一度お試しください。");
+    }
+  }
+  function openRegistration() {
+    if (user) setRegister(true);
+    else router.push("/signup");
+  }
   const [setupRequired, setSetupRequired] = useState(false),
     [uploadedImage, setUploadedImage] = useState<string | null>(null),
     [uploading, setUploading] = useState(false);
@@ -56,6 +77,16 @@ export default function Directory() {
         setUser(d.signedIn);
         setMine(d.mine);
         setSetupRequired(d.setupRequired);
+        const url = new URL(window.location.href);
+        if (d.signedIn && url.searchParams.get("onboarding") === "1") {
+          setRegister(true);
+          url.searchParams.delete("onboarding");
+          window.history.replaceState(
+            null,
+            "",
+            url.pathname + url.search + url.hash,
+          );
+        }
       })
       .catch(() =>
         setMessage(
@@ -280,10 +311,28 @@ export default function Directory() {
             <span>{favorites.length.toString().padStart(2, "0")}</span>
           </button>
         </nav>
-        <Button className="join" onClick={() => setRegister(true)}>
-          <Plus size={16} />
-          {mine ? "プロフィールを編集" : "Find Goodに参加する"}
-        </Button>
+        <div className="header-account-actions">
+          <Button
+            className="join"
+            onClick={openRegistration}
+            disabled={loggingOut}
+          >
+            <Plus size={16} />
+            {mine ? "プロフィールを編集" : "Find Goodに参加する"}
+          </Button>
+          {user && (
+            <button
+              className="header-logout"
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              aria-busy={loggingOut}
+            >
+              <LogOut size={17} aria-hidden="true" />
+              {loggingOut ? "ログアウト中…" : "ログアウト"}
+            </button>
+          )}
+        </div>
       </header>
       <main>
         <section className="intro">
@@ -518,7 +567,7 @@ export default function Directory() {
             </h2>
             <p>あなたの得意も、Find Goodで見つけてもらおう。</p>
           </div>
-          <Button onClick={() => setRegister(true)}>
+          <Button onClick={openRegistration}>
             無料で参加する <ArrowUpRight size={20} />
           </Button>
         </section>
@@ -530,8 +579,13 @@ export default function Directory() {
         </button>
         <small>© 2026 FIND GOOD</small>
         {user && (
-          <button onClick={() => signOut({ callbackUrl: "/" })}>
-            ログアウト
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            aria-busy={loggingOut}
+          >
+            {loggingOut ? "ログアウト中…" : "ログアウト"}
           </button>
         )}
       </footer>
@@ -633,8 +687,12 @@ export default function Directory() {
               <p>
                 プロフィールとお気に入りを保存するため、ログインしてください。
               </p>
-              <Button onClick={() => signIn("google", { callbackUrl: "/" })}>
-                Googleでログイン <ArrowRight size={16} />
+              <Button
+                onClick={() =>
+                  signIn("google", { callbackUrl: "/?onboarding=1" })
+                }
+              >
+                Googleで新規登録・ログイン <ArrowRight size={16} />
               </Button>
             </div>
           ) : (
@@ -797,7 +855,7 @@ export default function Directory() {
           <Button
             onClick={() => {
               setAbout(false);
-              setRegister(true);
+              openRegistration();
             }}
           >
             Find Goodに参加する <ArrowRight size={16} />
@@ -808,7 +866,11 @@ export default function Directory() {
         <div className="toast" role="status">
           <span>{message}</span>
           {!user && message.includes("ログイン") && (
-            <button onClick={() => signIn("google", { callbackUrl: "/" })}>
+            <button
+              onClick={() =>
+                signIn("google", { callbackUrl: "/?onboarding=1" })
+              }
+            >
               ログイン
             </button>
           )}

@@ -21,6 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
       })
     : undefined,
   providers: [Google],
+  pages: { signIn: "/signup", error: "/signup" },
   session: { strategy: "database" },
   callbacks: {
     session({ session, user }) {
