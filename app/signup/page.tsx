@@ -98,6 +98,11 @@ export default async function SignupPage({
               認証を完了できませんでした。もう一度お試しください。
             </p>
           )}
+          <p className={styles.legalNote}>
+            ご利用前に<Link href="/terms">利用規約</Link>と
+            <Link href="/privacy">プライバシーポリシー</Link>
+            をご確認ください（現在は草案です）。
+          </p>
           <SignupButton configured={configured} />
           <div className={styles.bottom}>
             <p>プロフィールは保存するまで公開されません。</p>
@@ -107,7 +112,13 @@ export default async function SignupPage({
           </div>
         </section>
       </main>
-      <footer className={styles.footer}>© Find Good</footer>
+      <footer className={styles.footer}>
+        © Find Good
+        <div className={styles.legalLinks}>
+          <Link href="/privacy">プライバシーポリシー</Link>
+          <Link href="/terms">利用規約</Link>
+        </div>
+      </footer>
     </div>
   );
 }
