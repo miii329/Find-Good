@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import {
@@ -577,6 +578,8 @@ export default function Directory() {
         <button onClick={() => setAbout(true)}>
           Find Goodについて <ArrowUpRight size={14} />
         </button>
+        <Link href="/privacy">プライバシーポリシー</Link>
+        <Link href="/terms">利用規約</Link>
         <small>© 2026 FIND GOOD</small>
         {user && (
           <button

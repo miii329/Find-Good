@@ -409,3 +409,27 @@
     min-height: 56px;
   }
 }
+
+.legalNote {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #73737b;
+  margin: 0 0 16px;
+}
+.legalNote a {
+  color: #333;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.legalLinks {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.legalLinks a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
