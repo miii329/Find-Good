@@ -1295,20 +1295,6 @@ footer small {
   }
 }
 
-/* A brief wobble, preserving the card's resting tilt. */
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .manifesto:hover {
-    animation: manifesto-wobble 650ms ease-in-out;
-  }
-}
-@keyframes manifesto-wobble {
-  0%, 100% { transform: rotate(2deg); }
-  20% { transform: rotate(-3deg); }
-  40% { transform: rotate(4deg); }
-  60% { transform: rotate(-1deg); }
-  80% { transform: rotate(3deg); }
-}
-
 /* Keep the three admin account actions together at the right edge. */
 .header:has(.header-admin-link) .header-account-actions {
   margin-left: auto;

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import manifestoMotion from "./manifesto-motion.module.css";
 import ThumbnailField from "./thumbnail-field";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -389,7 +390,7 @@ export default function Directory() {
             </h1>
             <p>あなたの「いいな」が、誰かの仕事になる。</p>
           </div>
-          <button className="manifesto" onClick={() => setAbout(true)}>
+          <button className={`manifesto ${manifestoMotion.card}`} onClick={() => setAbout(true)}>
             <span>
               つくる人に、
               <br />
