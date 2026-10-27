@@ -433,3 +433,136 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.chooser {
+  max-width: 1100px;
+  margin: auto;
+  padding: 65px 28px;
+  text-align: center;
+}
+.choiceTitle {
+  font-size: clamp(25px, 3.5vw, 40px);
+  font-weight: 800;
+  line-height: 1.6;
+  margin: 16px 0;
+}
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin: 40px 0 24px;
+}
+.choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  background: white;
+  color: #171717;
+  text-decoration: none;
+  padding: 36px;
+  border: 1px solid #deded9;
+  border-radius: 20px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.choice:hover {
+  border-color: #7e9851;
+  box-shadow: 0 8px 26px #17171708;
+}
+.choiceIcon {
+  padding: 16px;
+  border-radius: 16px;
+  background: #d9f85a;
+  margin-bottom: 24px;
+}
+.seeker .choiceIcon {
+  background: #eee5ff;
+}
+.choice small {
+  color: #777;
+  letter-spacing: 3px;
+  font-size: 11px;
+}
+.choice h2 {
+  font-size: 24px;
+  font-weight: 750;
+  margin: 12px 0 16px;
+}
+.choice p {
+  line-height: 1.9;
+  color: #666;
+}
+.choice ul {
+  padding-left: 20px;
+  list-style: disc;
+  line-height: 2.1;
+  margin: 20px 0 28px;
+  font-size: 14px;
+}
+.choiceAction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: auto;
+  padding: 18px 20px;
+  background: #171717;
+  color: white;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.seeker .choiceAction {
+  background: #f1ebfb;
+  color: #171717;
+}
+.card .roleTitle {
+  font-size: clamp(26px, 2.8vw, 35px);
+}
+.confirmation {
+  max-width: 650px;
+  padding: 60px 24px;
+  margin: auto;
+}
+.confirmation .legalNote {
+  margin: 28px 0;
+}
+@media (max-width: 700px) {
+  .chooser {
+    padding: 36px 20px;
+  }
+  .choices {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 28px;
+  }
+  .choice {
+    padding: 26px;
+  }
+  .choice h2 {
+    font-size: 22px;
+  }
+}
+
+/* Seeker-only guidance; creator registration retains its existing design. */
+.seekerSteps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 22px 0 0;
+  margin: 14px 0 0;
+  border-top: 1px solid #e1e1da;
+}
+.seekerSteps li { min-width: 0; }
+.seekerSteps li > span { display: block; color: #777184; font-size: 11px; letter-spacing: .12em; margin-bottom: 8px; }
+.seekerSteps strong { font-size: 13px; line-height: 1.7; }
+.seekerSteps p { margin: 6px 0 0; color: #72727a; font-size: 12px; line-height: 1.8; }
+.seekerPage .badge { background: #efe6ff; font-size: 12px; }
+@media (max-width: 420px) {
+  .seekerSteps { grid-template-columns: 1fr; gap: 16px; }
+  .seekerSteps li { display: grid; grid-template-columns: 28px 1fr; column-gap: 8px; }
+  .seekerSteps li > span { margin: 2px 0 0; }
+  .seekerSteps p { grid-column: 2; }
+}

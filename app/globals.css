@@ -699,6 +699,29 @@ footer small {
   max-width: 650px !important;
   line-height: 1.8;
 }
+.modal.detail {
+  max-width: min(520px, calc(100% - 24px)) !important;
+  grid-template-columns: minmax(0, 1fr);
+  overflow-wrap: anywhere;
+}
+.modal.detail > * {
+  min-width: 0;
+}
+.detail .facts > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+.detail .detailactions {
+  flex-direction: column;
+  align-items: stretch;
+}
+.modal.registration-modal {
+  max-width: min(520px, calc(100% - 24px)) !important;
+  grid-template-columns: minmax(0, 1fr);
+}
+.registration-modal .formrow {
+  grid-template-columns: minmax(0, 1fr);
+}
 .modal [data-slot="dialog-title"] {
   font-size: 24px;
   line-height: 1.5;
@@ -1271,3 +1294,31 @@ footer small {
     flex-basis: 100%;
   }
 }
+
+/* A brief wobble, preserving the card's resting tilt. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .manifesto:hover {
+    animation: manifesto-wobble 650ms ease-in-out;
+  }
+}
+@keyframes manifesto-wobble {
+  0%, 100% { transform: rotate(2deg); }
+  20% { transform: rotate(-3deg); }
+  40% { transform: rotate(4deg); }
+  60% { transform: rotate(-1deg); }
+  80% { transform: rotate(3deg); }
+}
+
+/* Keep the three admin account actions together at the right edge. */
+.header:has(.header-admin-link) .header-account-actions {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+@media (max-width: 760px) {
+  .header:has(.header-admin-link) .header-account-actions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+}
+
+.header-requests-link { white-space: nowrap; text-decoration: none; }

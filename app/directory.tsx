@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import ThumbnailField from "./thumbnail-field";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
@@ -22,9 +23,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { hasRole, type StoredRole } from "@/lib/registration";
 import { categories, demoDesigners, type Designer } from "./data";
 export default function Directory() {
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [accountRole, setAccountRole] = useState<StoredRole | null>(
+    null,
+  );
   const logoutPending = useRef(false);
   const [loggingOut, setLoggingOut] = useState(false);
   async function handleLogout() {
@@ -40,8 +46,12 @@ export default function Directory() {
     }
   }
   function openRegistration() {
-    if (user) setRegister(true);
-    else router.push("/signup");
+    if (user && hasRole(accountRole, "creator")) setRegister(true);
+    else if (user && accountRole === "seeker") {
+      setView("designers");
+      setCategory("すべて");
+      setQ("");
+    } else router.push("/signup");
   }
   const [setupRequired, setSetupRequired] = useState(false),
     [uploadedImage, setUploadedImage] = useState<string | null>(null),
@@ -68,6 +78,8 @@ export default function Directory() {
           profiles: Designer[];
           favorites: string[];
           signedIn: boolean;
+          isAdmin: boolean;
+          accountRole: StoredRole | null;
           mine: Designer | null;
           setupRequired: boolean;
         }>;
@@ -76,10 +88,16 @@ export default function Directory() {
         setDesigners([...demoDesigners, ...d.profiles]);
         setFavorites(d.favorites);
         setUser(d.signedIn);
+        setIsAdmin(d.signedIn && d.isAdmin === true);
+        setAccountRole(d.accountRole ?? null);
         setMine(d.mine);
         setSetupRequired(d.setupRequired);
         const url = new URL(window.location.href);
-        if (d.signedIn && url.searchParams.get("onboarding") === "1") {
+        if (
+          d.signedIn &&
+          hasRole(d.accountRole, "creator") &&
+          url.searchParams.get("onboarding") === "1"
+        ) {
           setRegister(true);
           url.searchParams.delete("onboarding");
           window.history.replaceState(
@@ -311,15 +329,27 @@ export default function Directory() {
             お気に入り{" "}
             <span>{favorites.length.toString().padStart(2, "0")}</span>
           </button>
+          {user && hasRole(accountRole, "seeker") && (
+            <Link href="/requests" className="header-requests-link">申請状況</Link>
+          )}
         </nav>
         <div className="header-account-actions">
+          {user && isAdmin && (
+            <Button asChild variant="outline">
+              <Link className="header-admin-link" href="/admin">管理画面へ <ArrowRight size={16} aria-hidden="true" /></Link>
+            </Button>
+          )}
           <Button
             className="join"
             onClick={openRegistration}
             disabled={loggingOut}
           >
             <Plus size={16} />
-            {mine ? "プロフィールを編集" : "Find Goodに参加する"}
+            {accountRole === "seeker"
+              ? "クリエイターを探す"
+              : mine
+                ? "プロフィールを編集"
+                : "Find Goodに参加する"}
           </Button>
           {user && (
             <button
@@ -333,6 +363,7 @@ export default function Directory() {
               {loggingOut ? "ログアウト中…" : "ログアウト"}
             </button>
           )}
+
         </div>
       </header>
       <main>
@@ -581,16 +612,6 @@ export default function Directory() {
         <Link href="/privacy">プライバシーポリシー</Link>
         <Link href="/terms">利用規約</Link>
         <small>© 2026 FIND GOOD</small>
-        {user && (
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={loggingOut}
-            aria-busy={loggingOut}
-          >
-            {loggingOut ? "ログアウト中…" : "ログアウト"}
-          </button>
-        )}
       </footer>
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="detail modal">
@@ -628,9 +649,7 @@ export default function Directory() {
                 </div>
                 <div>
                   <dt>お仕事</dt>
-                  <dd>
-                    {selected.available ? "ご相談受付中" : "現在受付休止中"}
-                  </dd>
+                  <dd>{selected.available ? "相談受付中" : "受付休止中"}</dd>
                 </div>
               </dl>
               <div className="detailactions">
@@ -644,18 +663,23 @@ export default function Directory() {
                     ? "保存済み"
                     : "お気に入りに保存"}
                 </Button>
-                {selected.url && (
+                {!selected.demo && selected.available ? (
                   <Button asChild>
-                    <a
-                      href={selected.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      ポートフォリオ・相談先 <ArrowUpRight size={16} />
-                    </a>
+                    <Link href={`/contact/${selected.id}`}>
+                      コンタクトを取りたい <ArrowRight size={16} />
+                    </Link>
                   </Button>
+                ) : (
+                  <Button disabled>コンタクトを取りたい</Button>
                 )}
               </div>
+              {!selected.demo && (
+                <p className="notice">
+                  {!selected.available
+                    ? "現在、お仕事の相談受付を休止しています。"
+                    : "管理者が申請を確認し、承認後にクリエイターへ取り次ぎます。"}
+                </p>
+              )}
               {selected.demo && (
                 <p className="notice">
                   架空のデザイナーのため、お仕事の相談はできません。
@@ -672,7 +696,7 @@ export default function Directory() {
           if (!o) setUploadedImage(null);
         }}
       >
-        <DialogContent className="modal">
+        <DialogContent className="modal registration-modal">
           <DialogTitle>
             {mine ? "プロフィールを編集" : "あなたの得意を、Find Goodに。"}
           </DialogTitle>
@@ -778,28 +802,14 @@ export default function Directory() {
                   defaultValue={mine?.title}
                 />
               </label>
+              <ThumbnailField
+                value={uploadedImage ?? mine?.image ?? ""}
+                uploading={uploading}
+                onChange={setUploadedImage}
+                onUpload={uploadImage}
+              />
               <label>
-                作品画像をアップロード（任意・4MB以下）
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={uploading}
-                  onChange={uploadImage}
-                />
-                {uploading && <span>アップロード中…</span>}
-              </label>
-              <label>
-                作品画像のURL（任意）
-                <input
-                  name="image"
-                  type="url"
-                  value={uploadedImage ?? mine?.image ?? ""}
-                  onChange={(e) => setUploadedImage(e.target.value)}
-                  placeholder="https://…"
-                />
-              </label>
-              <label>
-                ポートフォリオ・相談先URL
+                ポートフォリオURL
                 <input
                   name="url"
                   type="url"

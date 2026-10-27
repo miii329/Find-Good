@@ -1,0 +1,137 @@
+.success {
+  margin-top: 28px;
+  padding: 32px;
+  border: 1px solid #dfe4d5;
+  border-radius: 20px;
+  background: #fff;
+  text-align: center;
+  animation: appear 0.35s ease-out;
+}
+.icon {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 18px;
+}
+.icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.icon circle {
+  fill: #e2f6ba;
+  stroke: none;
+  transform-origin: center;
+  animation: pop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+.icon path {
+  fill: none;
+  stroke: #334c20;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 45;
+  stroke-dashoffset: 0;
+  animation: draw 0.5s 0.15s both;
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: #68765a;
+}
+.success h2 {
+  font-size: 23px;
+  font-weight: 700;
+  margin: 12px 0;
+}
+.success > p {
+  line-height: 1.9;
+}
+.comment {
+  margin: 24px 0 16px;
+  background: #f6f7f2;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: left;
+  font-size: 14px;
+}
+.comment p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 10px;
+  line-height: 1.8;
+}
+.receipt {
+  font-size: 11px;
+  color: #777;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.actions a,
+.actions button {
+  padding: 12px 18px;
+  border: 1px solid #d9decf;
+  border-radius: 7px;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.actions a {
+  background: #252823;
+  color: white;
+}
+.actions button {
+  background: white;
+  color: #252823;
+}
+@keyframes pop {
+  from {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 45;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .success,
+  .icon circle,
+  .icon path {
+    animation: none;
+  }
+}
+@media (max-width: 480px) {
+  .success {
+    padding: 24px 16px;
+  }
+  .success h2 {
+    font-size: 20px;
+  }
+  .actions {
+    flex-direction: column;
+  }
+}
