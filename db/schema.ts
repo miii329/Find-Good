@@ -5,6 +5,7 @@ import {
   integer,
   boolean,
   primaryKey,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 export const users = pgTable("users", {
@@ -100,3 +101,40 @@ export const registrations = pgTable("registrations", {
     .notNull()
     .defaultNow(),
 });
+
+export const contactRequests = pgTable(
+  "contact_requests",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    requesterId: text("requester_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    profileId: text("profile_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    message: text("message").notNull(),
+    status: text("status", {
+      enum: ["pending", "approved", "declined", "forwarded"],
+    })
+      .notNull()
+      .default("pending"),
+    adminNote: text("admin_note").notNull().default(""),
+    reviewedBy: text("reviewed_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("contact_request_requester_profile_unique").on(
+      t.requesterId,
+      t.profileId,
+    ),
+  ],
+);

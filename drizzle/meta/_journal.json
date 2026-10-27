@@ -15,6 +15,13 @@
       "when": 1793058715115,
       "tag": "0001_registration_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793082342518,
+      "tag": "0002_contact_requests",
+      "breakpoints": true
     }
   ]
 }

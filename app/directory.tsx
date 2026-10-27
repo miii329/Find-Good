@@ -645,9 +645,7 @@ export default function Directory() {
                 </div>
                 <div>
                   <dt>お仕事</dt>
-                  <dd>
-                    {selected.available ? "相談受付中" : "受付休止中"}
-                  </dd>
+                  <dd>{selected.available ? "相談受付中" : "受付休止中"}</dd>
                 </div>
               </dl>
               <div className="detailactions">
@@ -661,15 +659,11 @@ export default function Directory() {
                     ? "保存済み"
                     : "お気に入りに保存"}
                 </Button>
-                {selected.url && !selected.demo && selected.available ? (
+                {!selected.demo && selected.available ? (
                   <Button asChild>
-                    <a
-                      href={selected.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      コンタクトを取りたい <ArrowUpRight size={16} />
-                    </a>
+                    <Link href={`/contact/${selected.id}`}>
+                      コンタクトを取りたい <ArrowRight size={16} />
+                    </Link>
                   </Button>
                 ) : (
                   <Button disabled>コンタクトを取りたい</Button>
@@ -679,9 +673,7 @@ export default function Directory() {
                 <p className="notice">
                   {!selected.available
                     ? "現在、お仕事の相談受付を休止しています。"
-                    : !selected.url
-                      ? "相談先がまだ登録されていません。"
-                      : "登録されたポートフォリオ・相談先を別タブで開きます。"}
+                    : "管理者が申請を確認し、承認後にクリエイターへ取り次ぎます。"}
                 </p>
               )}
               {selected.demo && (
