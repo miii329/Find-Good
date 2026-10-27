@@ -89,3 +89,14 @@ export const favorites = pgTable(
   },
   (t) => [primaryKey({ columns: [t.owner, t.designer] })],
 );
+
+// Registration purpose; never accepts a client-provided owner ID.
+export const registrations = pgTable("registrations", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  role: text("role", { enum: ["creator", "seeker"] }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

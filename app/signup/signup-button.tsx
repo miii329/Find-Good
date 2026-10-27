@@ -14,7 +14,13 @@ function GoogleIcon() {
   );
 }
 
-export default function SignupButton({ configured }: { configured: boolean }) {
+export default function SignupButton({
+  configured,
+  role,
+}: {
+  configured: boolean;
+  role: "creator" | "seeker";
+}) {
   const [pending, setPending] = useState<"signup" | "login" | null>(null);
   const inFlight = useRef(false);
   const [error, setError] = useState("");
@@ -25,7 +31,7 @@ export default function SignupButton({ configured }: { configured: boolean }) {
     setError("");
     try {
       await signIn("google", {
-        callbackUrl: mode === "signup" ? "/?onboarding=1" : "/",
+        callbackUrl: mode === "signup" ? `/signup/complete?role=${role}` : "/",
       });
     } catch {
       setError("接続できませんでした。もう一度お試しください。");

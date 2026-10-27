@@ -1,3 +1,6 @@
+import { getDb } from "@/db";
+import { registrations } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
 import { auth, isAuthConfigured } from "@/auth";
 import {
@@ -18,6 +21,15 @@ export async function POST(request: Request) {
     const session = await auth();
     if (!session?.user.id)
       return Response.json({ error: "ログインが必要です。" }, { status: 401 });
+    const [registration] = await getDb()
+      .select()
+      .from(registrations)
+      .where(eq(registrations.userId, session.user.id));
+    if (registration?.role !== "creator")
+      return Response.json(
+        { error: "画像の掲載にはクリエイター登録が必要です。" },
+        { status: 403 },
+      );
     const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } =
       process.env;
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET)

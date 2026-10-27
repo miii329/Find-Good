@@ -8,6 +8,13 @@
       "when": 1791015581224,
       "tag": "0000_heavy_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793058715115,
+      "tag": "0001_registration_roles",
+      "breakpoints": true
     }
   ]
 }

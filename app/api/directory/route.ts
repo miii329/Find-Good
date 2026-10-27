@@ -1,6 +1,6 @@
 import { auth, isAuthConfigured } from "@/auth";
 import { getDb } from "@/db";
-import { profiles, favorites } from "@/db/schema";
+import { profiles, favorites, registrations } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { demoDesigners, type Designer } from "@/app/data";
 import { z } from "zod";
@@ -40,6 +40,12 @@ export async function GET() {
         { headers: { "Cache-Control": "private, no-store" } },
       );
     const db = getDb();
+    const [registration] = session?.user.id
+      ? await db
+          .select()
+          .from(registrations)
+          .where(eq(registrations.userId, session.user.id))
+      : [];
     const rows = await db
       .select()
       .from(profiles)
@@ -57,6 +63,7 @@ export async function GET() {
         favorites: saved.map((f) => f.designer),
         mine: mine ? publicProfile(mine) : null,
         signedIn: !!session?.user.id,
+        accountRole: registration?.role ?? null,
         setupRequired: !configured,
       },
       { headers: { "Cache-Control": "private, no-store" } },
@@ -91,6 +98,15 @@ export async function POST(request: Request) {
       .passthrough()
       .parse(await request.json());
     if (body.action === "profile") {
+      const [registration] = await db
+        .select()
+        .from(registrations)
+        .where(eq(registrations.userId, owner));
+      if (registration?.role !== "creator")
+        return Response.json(
+          { error: "作品の掲載にはクリエイター登録が必要です。" },
+          { status: 403 },
+        );
       const input = profileInput.parse(body);
       const values = {
         ...input,

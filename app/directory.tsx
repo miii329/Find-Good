@@ -25,6 +25,9 @@ import { Button } from "@/components/ui/button";
 import { categories, demoDesigners, type Designer } from "./data";
 export default function Directory() {
   const router = useRouter();
+  const [accountRole, setAccountRole] = useState<"creator" | "seeker" | null>(
+    null,
+  );
   const logoutPending = useRef(false);
   const [loggingOut, setLoggingOut] = useState(false);
   async function handleLogout() {
@@ -40,8 +43,12 @@ export default function Directory() {
     }
   }
   function openRegistration() {
-    if (user) setRegister(true);
-    else router.push("/signup");
+    if (user && accountRole === "creator") setRegister(true);
+    else if (user && accountRole === "seeker") {
+      setView("designers");
+      setCategory("すべて");
+      setQ("");
+    } else router.push("/signup");
   }
   const [setupRequired, setSetupRequired] = useState(false),
     [uploadedImage, setUploadedImage] = useState<string | null>(null),
@@ -68,6 +75,7 @@ export default function Directory() {
           profiles: Designer[];
           favorites: string[];
           signedIn: boolean;
+          accountRole: "creator" | "seeker" | null;
           mine: Designer | null;
           setupRequired: boolean;
         }>;
@@ -76,10 +84,15 @@ export default function Directory() {
         setDesigners([...demoDesigners, ...d.profiles]);
         setFavorites(d.favorites);
         setUser(d.signedIn);
+        setAccountRole(d.accountRole ?? null);
         setMine(d.mine);
         setSetupRequired(d.setupRequired);
         const url = new URL(window.location.href);
-        if (d.signedIn && url.searchParams.get("onboarding") === "1") {
+        if (
+          d.signedIn &&
+          d.accountRole === "creator" &&
+          url.searchParams.get("onboarding") === "1"
+        ) {
           setRegister(true);
           url.searchParams.delete("onboarding");
           window.history.replaceState(
@@ -319,7 +332,11 @@ export default function Directory() {
             disabled={loggingOut}
           >
             <Plus size={16} />
-            {mine ? "プロフィールを編集" : "Find Goodに参加する"}
+            {accountRole === "seeker"
+              ? "クリエイターを探す"
+              : mine
+                ? "プロフィールを編集"
+                : "Find Goodに参加する"}
           </Button>
           {user && (
             <button
