@@ -611,16 +611,6 @@ export default function Directory() {
         <Link href="/privacy">プライバシーポリシー</Link>
         <Link href="/terms">利用規約</Link>
         <small>© 2026 FIND GOOD</small>
-        {user && (
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={loggingOut}
-            aria-busy={loggingOut}
-          >
-            {loggingOut ? "ログアウト中…" : "ログアウト"}
-          </button>
-        )}
       </footer>
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="detail modal">
