@@ -1,6 +1,8 @@
 import { getRegistration } from "@/lib/registration-store";
 import { hasRole } from "@/lib/registration";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { notFound, redirect } from "next/navigation";
 import { auth, isAuthConfigured } from "@/auth";
 import { getDb } from "@/db";
@@ -79,6 +81,14 @@ export default async function ContactPage({
           <ContactForm profileId={id} />
         </>
       )}
+      <div className="mt-6 flex justify-center">
+        <Button asChild variant="outline">
+          <Link href="/">
+            <ArrowLeft size={16} aria-hidden="true" />
+            クリエイター一覧に戻る
+          </Link>
+        </Button>
+      </div>
     </main>
   );
 }
