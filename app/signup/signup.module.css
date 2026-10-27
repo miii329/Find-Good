@@ -544,3 +544,25 @@
     font-size: 22px;
   }
 }
+
+/* Seeker-only guidance; creator registration retains its existing design. */
+.seekerSteps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 22px 0 0;
+  margin: 14px 0 0;
+  border-top: 1px solid #e1e1da;
+}
+.seekerSteps li { min-width: 0; }
+.seekerSteps li > span { display: block; color: #777184; font-size: 11px; letter-spacing: .12em; margin-bottom: 8px; }
+.seekerSteps strong { font-size: 13px; line-height: 1.7; }
+.seekerSteps p { margin: 6px 0 0; color: #72727a; font-size: 12px; line-height: 1.8; }
+.seekerPage .badge { background: #efe6ff; font-size: 12px; }
+@media (max-width: 420px) {
+  .seekerSteps { grid-template-columns: 1fr; gap: 16px; }
+  .seekerSteps li { display: grid; grid-template-columns: 28px 1fr; column-gap: 8px; }
+  .seekerSteps li > span { margin: 2px 0 0; }
+  .seekerSteps p { grid-column: 2; }
+}

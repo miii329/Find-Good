@@ -21,7 +21,7 @@ export default async function RoleSignup({
     redirect(`/signup/complete?role=${role}`);
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${!creator ? styles.seekerPage : ""}`}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand}>
           <span>F</span>Find Good
@@ -95,16 +95,23 @@ export default async function RoleSignup({
               </figcaption>
             </figure>
           </div>
+          {!creator && (
+            <ol className={styles.seekerSteps} aria-label="相談までの流れ">
+              <li><span>01</span><strong>お気に入りを探す</strong><p>作品や得意なことから、相性のよい人を。</p></li>
+              <li><span>02</span><strong>相談を申請する</strong><p>依頼したい内容やご予算を伝えます。</p></li>
+              <li><span>03</span><strong>管理者が取り次ぐ</strong><p>内容を確認・承認した後、相手へ共有。</p></li>
+            </ol>
+          )}
         </section>
         <section className={styles.card} aria-labelledby="signup-title">
-          <span className={styles.badge}>無料ではじめる</span>
+          <span className={styles.badge}>{creator ? "無料ではじめる" : "仕事を依頼したい個人・企業の方へ"}</span>
           <h2 id="signup-title" className={styles.roleTitle}>
             {creator ? "クリエイター登録" : "シーカー登録"}
           </h2>
           <p className={styles.subtitle}>
             {creator
               ? "あなたの得意を、必要としている人へ。"
-              : "お気に入りのクリエイターを見つけよう。"}
+              : "あなたの「つくりたい」を、一緒にかたちに。"}
           </p>
           <ul className={styles.benefits}>
             {(creator
@@ -116,7 +123,7 @@ export default async function RoleSignup({
               : [
                   "作品やスキルから人を探す",
                   "気になるクリエイターを保存",
-                  "掲載された連絡先から相談する",
+                  "管理者を通じて相談を申し込む",
                 ]
             ).map((text) => (
               <li key={text}>
@@ -142,7 +149,7 @@ export default async function RoleSignup({
             <p>
               {creator
                 ? "プロフィールは保存するまで公開されません。"
-                : "依頼者としての公開プロフィールは作成されません。相談は外部の連絡先から行います。"}
+                : "依頼者としての公開プロフィールは作成されません。相談内容と連絡先は、申請時の同意に基づき、管理者の承認後に相手へ共有します。"}
             </p>
             <Link href={creator ? "/signup/seeker" : "/signup/creator"}>
               {creator
