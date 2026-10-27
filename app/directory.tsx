@@ -689,7 +689,7 @@ export default function Directory() {
           if (!o) setUploadedImage(null);
         }}
       >
-        <DialogContent className="modal">
+        <DialogContent className="modal registration-modal">
           <DialogTitle>
             {mine ? "プロフィールを編集" : "あなたの得意を、Find Goodに。"}
           </DialogTitle>
