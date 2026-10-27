@@ -1,8 +1,10 @@
+import { getRegistration } from "@/lib/registration-store";
+import { hasRole } from "@/lib/registration";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth, isAuthConfigured } from "@/auth";
 import { getDb } from "@/db";
-import { contactRequests, profiles, registrations } from "@/db/schema";
+import { contactRequests, profiles } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { statusLabels } from "@/lib/contact";
 import ContactForm from "./form";
@@ -22,11 +24,8 @@ export default async function ContactPage({
   if (!session?.user.id) redirect("/signup/seeker");
   const { id } = await params;
   const db = getDb();
-  const [role] = await db
-    .select()
-    .from(registrations)
-    .where(eq(registrations.userId, session.user.id));
-  if (role?.role !== "seeker")
+  const role = await getRegistration(session.user.id);
+  if (!hasRole(role?.role, "seeker"))
     return (
       <main className={styles.page}>
         <h1>シーカー登録が必要です</h1>

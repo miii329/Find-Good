@@ -1,10 +1,12 @@
+import { getRegistration } from "@/lib/registration-store";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, isAuthConfigured } from "@/auth";
-import { getDb } from "@/db";
-import { registrations } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { registrationInput, registrationDestination } from "@/lib/registration";
+import {
+  registrationInput,
+  registrationDestination,
+  hasRole,
+} from "@/lib/registration";
 import CompleteButton from "./complete-button";
 import styles from "../signup.module.css";
 export const metadata = { title: "登録内容の確認 | Find Good" };
@@ -19,11 +21,9 @@ export default async function CompletePage({
   if (!isAuthConfigured()) redirect(`/signup/${parsed.data.role}`);
   const session = await auth();
   if (!session?.user.id) redirect(`/signup/${parsed.data.role}`);
-  const [existing] = await getDb()
-    .select()
-    .from(registrations)
-    .where(eq(registrations.userId, session.user.id));
-  if (existing) redirect(registrationDestination(existing.role));
+  const existing = await getRegistration(session.user.id);
+  if (hasRole(existing?.role, parsed.data.role))
+    redirect(registrationDestination(parsed.data.role));
   const label = parsed.data.role === "creator" ? "クリエイター" : "シーカー";
   return (
     <div className={styles.page}>
@@ -35,7 +35,14 @@ export default async function CompletePage({
       <main className={styles.confirmation}>
         <section className={styles.card}>
           <span className={styles.badge}>あと1ステップ</span>
-          <h1 className={styles.choiceTitle}>{label}として登録</h1>
+          <h1 className={styles.choiceTitle}>
+            {label}として{existing ? "追加登録" : "登録"}
+          </h1>
+          {existing && (
+            <p className={styles.subtitle}>
+              現在の登録・プロフィールはそのままに、両方の機能を利用できるようになります。
+            </p>
+          )}
           <p className={styles.subtitle}>
             {parsed.data.role === "creator"
               ? "登録後に作品とスキルを掲載しましょう。"

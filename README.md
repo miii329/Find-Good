@@ -158,3 +158,13 @@ pnpm dev
 
 通常の `node -v` は従来のバージョンを表示します。このプロジェクトの実行バージョン確認には `pnpm node -v` を使用してください。
 # Find-Good
+
+### 登録情報の保存先
+
+Google認証情報とログインセッションは共通の `users` / `accounts` / `sessions` で管理します。
+クリエイターの登録は `creator_registrations`、シーカーの登録は `seeker_registrations` に、それぞれ `user_id` と登録日時を保存します。
+同じアカウントが両方に登録した場合は、両テーブルに1行ずつ保存されます。繰り返し登録しても重複せず、元の登録日時を維持します。
+クリエイターの作品・プロフィールは従来の `profiles`、コンタクト申請・コメントは `contact_requests` に保存します。
+
+`0003_separate_registrations` は既存の `registrations.role` を新テーブルに引き継ぎます。旧 `registrations` は移行元として保持しますが、新しいアプリは読み書きしません。
+本番環境ではマイグレーションとアプリの更新を合わせて行い、旧コードと新コードが同じDBへ並行して登録を書き込む期間を作らないでください。

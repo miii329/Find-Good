@@ -91,12 +91,12 @@ export const favorites = pgTable(
   (t) => [primaryKey({ columns: [t.owner, t.designer] })],
 );
 
-// Registration purpose; never accepts a client-provided owner ID.
+// Legacy registration snapshot. Retained for safe migration; application uses the separate tables below.
 export const registrations = pgTable("registrations", {
   userId: text("user_id")
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
-  role: text("role", { enum: ["creator", "seeker"] }).notNull(),
+  role: text("role", { enum: ["creator", "seeker", "both"] }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -138,3 +138,21 @@ export const contactRequests = pgTable(
     ),
   ],
 );
+
+// Role-specific registration records; authentication stays in users/accounts/sessions.
+export const creatorRegistrations = pgTable("creator_registrations", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+export const seekerRegistrations = pgTable("seeker_registrations", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

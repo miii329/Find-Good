@@ -22,11 +22,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { hasRole, type StoredRole } from "@/lib/registration";
 import { categories, demoDesigners, type Designer } from "./data";
 export default function Directory() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [accountRole, setAccountRole] = useState<"creator" | "seeker" | null>(
+  const [accountRole, setAccountRole] = useState<StoredRole | null>(
     null,
   );
   const logoutPending = useRef(false);
@@ -44,7 +45,7 @@ export default function Directory() {
     }
   }
   function openRegistration() {
-    if (user && accountRole === "creator") setRegister(true);
+    if (user && hasRole(accountRole, "creator")) setRegister(true);
     else if (user && accountRole === "seeker") {
       setView("designers");
       setCategory("すべて");
@@ -77,7 +78,7 @@ export default function Directory() {
           favorites: string[];
           signedIn: boolean;
           isAdmin: boolean;
-          accountRole: "creator" | "seeker" | null;
+          accountRole: StoredRole | null;
           mine: Designer | null;
           setupRequired: boolean;
         }>;
@@ -93,7 +94,7 @@ export default function Directory() {
         const url = new URL(window.location.href);
         if (
           d.signedIn &&
-          d.accountRole === "creator" &&
+          hasRole(d.accountRole, "creator") &&
           url.searchParams.get("onboarding") === "1"
         ) {
           setRegister(true);

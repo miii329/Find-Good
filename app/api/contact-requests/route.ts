@@ -1,6 +1,8 @@
+import { getRegistration } from "@/lib/registration-store";
+import { hasRole } from "@/lib/registration";
 import { auth, isAuthConfigured } from "@/auth";
 import { getDb } from "@/db";
-import { contactRequests, profiles, registrations } from "@/db/schema";
+import { contactRequests, profiles } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import { contactInput } from "@/lib/contact";
 import { isSameOrigin } from "@/lib/validation";
@@ -23,11 +25,8 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     const db = getDb();
-    const [role] = await db
-      .select()
-      .from(registrations)
-      .where(eq(registrations.userId, session.user.id));
-    if (role?.role !== "seeker")
+    const role = await getRegistration(session.user.id);
+    if (!hasRole(role?.role, "seeker"))
       return Response.json(
         { error: "シーカー登録が必要です。" },
         { status: 403 },

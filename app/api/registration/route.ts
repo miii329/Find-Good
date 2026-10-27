@@ -1,7 +1,7 @@
 import { auth, isAuthConfigured } from "@/auth";
 import { getDb } from "@/db";
-import { registrations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { creatorRegistrations, seekerRegistrations } from "@/db/schema";
+import { getRegistration } from "@/lib/registration-store";
 import { isSameOrigin } from "@/lib/validation";
 import { registrationInput, registrationDestination } from "@/lib/registration";
 export async function POST(request: Request) {
@@ -26,16 +26,21 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     const db = getDb();
+    const table =
+      parsed.data.role === "creator"
+        ? creatorRegistrations
+        : seekerRegistrations;
     await db
-      .insert(registrations)
-      .values({ userId: session.user.id, role: parsed.data.role })
+      .insert(table)
+      .values({ userId: session.user.id })
       .onConflictDoNothing();
-    const [saved] = await db
-      .select()
-      .from(registrations)
-      .where(eq(registrations.userId, session.user.id));
+    const saved = await getRegistration(session.user.id);
+    if (!saved) throw new Error("Registration was not saved");
     return Response.json(
-      { role: saved.role, destination: registrationDestination(saved.role) },
+      {
+        role: saved.role,
+        destination: registrationDestination(parsed.data.role),
+      },
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (error) {
