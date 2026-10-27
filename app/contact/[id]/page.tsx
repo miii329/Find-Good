@@ -36,7 +36,11 @@ export default async function ContactPage({
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, id));
   if (!profile) notFound();
   const [existing] = await db
-    .select({ status: contactRequests.status })
+    .select({
+      status: contactRequests.status,
+      message: contactRequests.message,
+      createdAt: contactRequests.createdAt,
+    })
     .from(contactRequests)
     .where(
       and(
@@ -50,10 +54,20 @@ export default async function ContactPage({
         <Link href="/">Find Good</Link>
       </header>
       <p className={styles.eyebrow}>CONTACT REQUEST</p>
-      <h1>{profile.name}さんに相談する</h1>
+      <h1>{profile.name}さんに会いたい</h1>
       {existing ? (
         <section className={styles.card}>
           <h2>申請状況：{statusLabels[existing.status]}</h2>
+          <p>
+            申請日時：
+            {existing.createdAt.toLocaleString("ja-JP", {
+              timeZone: "Asia/Tokyo",
+            })}
+          </p>
+          <h3>送信したコメント</h3>
+          <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {existing.message}
+          </p>
           <p>同じクリエイターへの申請は1件までです。</p>
         </section>
       ) : !profile.available ? (
