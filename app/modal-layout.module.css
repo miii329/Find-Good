@@ -1,0 +1,22 @@
+/* Loaded by Directory for both profile detail and registration dialogs. */
+.vertical:global(.modal) {
+  width: calc(100% - 24px);
+  max-width: 520px !important;
+  max-height: 90dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+.vertical > * { min-width: 0; }
+.vertical :global(.facts) > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+.vertical :global(.detailactions) {
+  flex-direction: column;
+  align-items: stretch;
+}
+.vertical :global(.formrow) {
+  grid-template-columns: minmax(0, 1fr);
+}

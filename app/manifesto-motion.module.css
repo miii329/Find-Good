@@ -1,0 +1,24 @@
+/* Imported directly by the card component so the animation travels with it. */
+.card {
+  transform-origin: 50% 60%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card:focus-visible {
+    animation: wobble 650ms ease-in-out;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card:hover {
+    animation: wobble 650ms ease-in-out;
+  }
+}
+@keyframes wobble {
+  0%, 100% { transform: rotate(2deg); }
+  20% { transform: rotate(-3deg); }
+  40% { transform: rotate(4deg); }
+  60% { transform: rotate(-1deg); }
+  80% { transform: rotate(3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+}
