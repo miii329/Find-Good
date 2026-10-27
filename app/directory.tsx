@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import ThumbnailField from "./thumbnail-field";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
@@ -801,26 +802,12 @@ export default function Directory() {
                   defaultValue={mine?.title}
                 />
               </label>
-              <label>
-                作品画像をアップロード（任意・4MB以下）
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={uploading}
-                  onChange={uploadImage}
-                />
-                {uploading && <span>アップロード中…</span>}
-              </label>
-              <label>
-                作品画像のURL（任意）
-                <input
-                  name="image"
-                  type="url"
-                  value={uploadedImage ?? mine?.image ?? ""}
-                  onChange={(e) => setUploadedImage(e.target.value)}
-                  placeholder="https://…"
-                />
-              </label>
+              <ThumbnailField
+                value={uploadedImage ?? mine?.image ?? ""}
+                uploading={uploading}
+                onChange={setUploadedImage}
+                onUpload={uploadImage}
+              />
               <label>
                 ポートフォリオ・相談先URL
                 <input
