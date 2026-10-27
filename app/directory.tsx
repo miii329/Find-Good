@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import manifestoMotion from "./manifesto-motion.module.css";
+import modalLayout from "./modal-layout.module.css";
 import ThumbnailField from "./thumbnail-field";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -615,7 +616,7 @@ export default function Directory() {
         <small>© 2026 FIND GOOD</small>
       </footer>
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="detail modal">
+        <DialogContent className={`detail modal ${modalLayout.vertical}`}>
           {selected && (
             <>
               <DialogTitle>{selected.name}</DialogTitle>
@@ -697,7 +698,7 @@ export default function Directory() {
           if (!o) setUploadedImage(null);
         }}
       >
-        <DialogContent className="modal registration-modal">
+        <DialogContent className={`modal registration-modal ${modalLayout.vertical}`}>
           <DialogTitle>
             {mine ? "プロフィールを編集" : "あなたの得意を、Find Goodに。"}
           </DialogTitle>
