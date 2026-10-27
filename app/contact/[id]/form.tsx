@@ -1,11 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import styles from "../../admin/page.module.css";
 import motion from "./success.module.css";
 export default function ContactForm({ profileId }: { profileId: string }) {
-  const router = useRouter();
   const pending = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const [busy, setBusy] = useState(false);
@@ -42,9 +40,7 @@ export default function ContactForm({ profileId }: { profileId: string }) {
         <p className={motion.receipt}>受付番号：{receipt.id}</p>
         <div className={motion.actions}>
           <Link href="/">クリエイター一覧へ</Link>
-          <button type="button" onClick={() => router.refresh()}>
-            申請状況を確認
-          </button>
+          <Link href="/requests">申請状況を確認</Link>
         </div>
       </section>
     );

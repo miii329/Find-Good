@@ -1320,3 +1320,5 @@ footer small {
     justify-content: flex-end;
   }
 }
+
+.header-requests-link { white-space: nowrap; text-decoration: none; }

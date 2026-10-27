@@ -328,6 +328,9 @@ export default function Directory() {
             お気に入り{" "}
             <span>{favorites.length.toString().padStart(2, "0")}</span>
           </button>
+          {user && hasRole(accountRole, "seeker") && (
+            <Link href="/requests" className="header-requests-link">申請状況</Link>
+          )}
         </nav>
         <div className="header-account-actions">
           {user && isAdmin && (
