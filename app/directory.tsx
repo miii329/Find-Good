@@ -809,7 +809,7 @@ export default function Directory() {
                 onUpload={uploadImage}
               />
               <label>
-                ポートフォリオ・相談先URL
+                ポートフォリオURL
                 <input
                   name="url"
                   type="url"
