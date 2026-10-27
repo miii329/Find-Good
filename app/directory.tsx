@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { categories, demoDesigners, type Designer } from "./data";
 export default function Directory() {
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [accountRole, setAccountRole] = useState<"creator" | "seeker" | null>(
     null,
   );
@@ -75,6 +76,7 @@ export default function Directory() {
           profiles: Designer[];
           favorites: string[];
           signedIn: boolean;
+          isAdmin: boolean;
           accountRole: "creator" | "seeker" | null;
           mine: Designer | null;
           setupRequired: boolean;
@@ -84,6 +86,7 @@ export default function Directory() {
         setDesigners([...demoDesigners, ...d.profiles]);
         setFavorites(d.favorites);
         setUser(d.signedIn);
+        setIsAdmin(d.signedIn && d.isAdmin === true);
         setAccountRole(d.accountRole ?? null);
         setMine(d.mine);
         setSetupRequired(d.setupRequired);
@@ -326,6 +329,11 @@ export default function Directory() {
           </button>
         </nav>
         <div className="header-account-actions">
+          {user && isAdmin && (
+            <Button asChild variant="outline">
+              <Link className="header-admin-link" href="/admin">管理画面へ <ArrowRight size={16} aria-hidden="true" /></Link>
+            </Button>
+          )}
           <Button
             className="join"
             onClick={openRegistration}
@@ -350,6 +358,7 @@ export default function Directory() {
               {loggingOut ? "ログアウト中…" : "ログアウト"}
             </button>
           )}
+
         </div>
       </header>
       <main>

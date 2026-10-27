@@ -1308,3 +1308,15 @@ footer small {
   60% { transform: rotate(-1deg); }
   80% { transform: rotate(3deg); }
 }
+
+/* Keep the three admin account actions together at the right edge. */
+.header:has(.header-admin-link) .header-account-actions {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+@media (max-width: 760px) {
+  .header:has(.header-admin-link) .header-account-actions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+}

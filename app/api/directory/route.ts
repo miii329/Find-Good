@@ -5,6 +5,7 @@ import { eq, and, asc } from "drizzle-orm";
 import { demoDesigners, type Designer } from "@/app/data";
 import { z } from "zod";
 import { profileInput, favoriteInput, isSameOrigin } from "@/lib/validation";
+import { isAdminId } from "@/lib/contact";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 function publicProfile(p: typeof profiles.$inferSelect): Designer {
@@ -35,6 +36,7 @@ export async function GET() {
           favorites: [],
           mine: null,
           signedIn: false,
+          isAdmin: false,
           setupRequired: true,
         },
         { headers: { "Cache-Control": "private, no-store" } },
@@ -63,6 +65,7 @@ export async function GET() {
         favorites: saved.map((f) => f.designer),
         mine: mine ? publicProfile(mine) : null,
         signedIn: !!session?.user.id,
+        isAdmin: isAdminId(session?.user.id, process.env.ADMIN_USER_IDS),
         accountRole: registration?.role ?? null,
         setupRequired: !configured,
       },
