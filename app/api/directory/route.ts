@@ -1,3 +1,4 @@
+import { normalizeCategory } from "@/lib/categories";
 import { getRegistration } from "@/lib/registration-store";
 import { hasRole } from "@/lib/registration";
 import { auth, isAuthConfigured } from "@/auth";
@@ -15,7 +16,7 @@ function publicProfile(p: typeof profiles.$inferSelect): Designer {
     id: p.id,
     name: p.name,
     english: p.english,
-    category: p.category,
+    category: normalizeCategory(p.category),
     location: p.location,
     bio: p.bio,
     skill: p.skill,

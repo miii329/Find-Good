@@ -1,3 +1,4 @@
+import { fieldCategories, normalizeCategory } from "./categories";
 import { z } from "zod";
 export const httpUrl = z
   .string()
@@ -9,13 +10,10 @@ export const httpUrl = z
   );
 export const profileInput = z.object({
   name: z.string().trim().min(1).max(40),
-  category: z.enum([
-    "ブランディング",
-    "Webデザイン",
-    "UI / UX",
-    "グラフィック",
-    "イラスト",
-  ]),
+  category: z.preprocess(
+    value => typeof value === "string" ? normalizeCategory(value) : value,
+    z.enum(fieldCategories),
+  ),
   location: z.string().trim().min(1).max(40),
   skill: z.string().trim().min(1).max(80),
   bio: z.string().trim().min(1).max(1000),
