@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import manifestoMotion from "./manifesto-motion.module.css";
 import modalLayout from "./modal-layout.module.css";
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { hasRole, type StoredRole } from "@/lib/registration";
 import { categories, demoDesigners, type Designer } from "./data";
 export default function Directory() {
+  const orbitPathId = useId();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [accountRole, setAccountRole] = useState<StoredRole | null>(
@@ -282,7 +283,11 @@ export default function Directory() {
       });
       const d = (await r.json()) as Designer & { error?: string };
       if (!r.ok) throw Error(d.error);
-      setDesigners((old) => [...old.filter((p) => p.id !== d.id), d]);
+      setDesigners((old) =>
+        old.some((p) => p.id === d.id)
+          ? old.map((p) => (p.id === d.id ? d : p))
+          : [...old, d],
+      );
       setMine(d);
       setRegister(false);
       setUploadedImage(null);
@@ -855,26 +860,46 @@ export default function Directory() {
       </Dialog>
       <Dialog open={about} onOpenChange={setAbout}>
         <DialogContent className="modal about">
-          <DialogTitle>つくる人に、もっと出会いを。</DialogTitle>
-          <DialogDescription>FIND GOOD</DialogDescription>
-          <p>
-            Find
-            Goodは、スキルを持って個人で働く人と、その人の力を必要としている人をつなぐ場所です。
-          </p>
-          <p>
-            有名かどうかより、どんなものをつくる人なのか。作品や得意なことから、あなたにぴったりのパートナーを見つけてください。
-          </p>
-          <p>
-            掲載は無料。気になる人への相談は、本人のポートフォリオや連絡先へ直接つながります。
-          </p>
-          <Button
-            onClick={() => {
-              setAbout(false);
-              openRegistration();
-            }}
-          >
-            Find Goodに参加する <ArrowRight size={16} />
-          </Button>
+          <div className="about-heading">
+            <DialogTitle>
+              つくる人に、<br />
+              もっと出会いを。
+            </DialogTitle>
+            <DialogDescription>FIND GOOD</DialogDescription>
+            <div className="about-orbit" aria-hidden="true">
+              <svg viewBox="0 0 160 160">
+                <defs>
+                  <path id={orbitPathId} d="M80,80 m-62,0 a62,62 0 1,1 124,0 a62,62 0 1,1 -124,0" />
+                </defs>
+                <text>
+                  <textPath href={`#${orbitPathId}`} textLength="389" lengthAdjust="spacing">
+                    FIND GOOD · GOOD PEOPLE, GOOD CONNECTIONS ·{" "}
+                  </textPath>
+                </text>
+              </svg>
+              <span className="about-orbit-center">✳</span>
+            </div>
+          </div>
+          <div className="about-body">
+            <p>
+              Find
+              Goodは、スキルを持って個人で働く人と、その人の力を必要としている人をつなぐ場所です。
+            </p>
+            <p>
+              単に仕事を依頼するだけでなく、あなたがその人の感性や、生み出す作品に惚れ込める、あなたにとってそんなパートナーが見つかることを願っています。
+            </p>
+            <p>
+              掲載は無料。中の人が責任を持って繋ぎます。
+            </p>
+            <Button
+              onClick={() => {
+                setAbout(false);
+                openRegistration();
+              }}
+            >
+              Find Goodに参加する <ArrowRight size={16} />
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       {message && (
