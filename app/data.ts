@@ -15,6 +15,7 @@ export type Designer = {
   budget: string;
   url: string;
   demo?: boolean;
+  isOwner?: boolean;
 };
 export const demoDesigners: Designer[] = [
   {

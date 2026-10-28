@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 function publicProfile(p: typeof profiles.$inferSelect): Designer {
   return {
     id: p.id,
+    isOwner: isAdminId(p.owner, process.env.ADMIN_USER_IDS),
     name: p.name,
     english: p.english,
     category: normalizeCategory(p.category),
