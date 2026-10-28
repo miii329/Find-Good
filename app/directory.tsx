@@ -282,7 +282,11 @@ export default function Directory() {
       });
       const d = (await r.json()) as Designer & { error?: string };
       if (!r.ok) throw Error(d.error);
-      setDesigners((old) => [...old.filter((p) => p.id !== d.id), d]);
+      setDesigners((old) =>
+        old.some((p) => p.id === d.id)
+          ? old.map((p) => (p.id === d.id ? d : p))
+          : [...old, d],
+      );
       setMine(d);
       setRegister(false);
       setUploadedImage(null);
