@@ -109,3 +109,10 @@ test("Next.js reconstructed hostname respects the browser Host header", () => {
     else process.env.AUTH_URL = previous;
   }
 });
+
+test("GIF signatures accept both versions and reject invalid headers and video", () => {
+  for (const header of ["GIF87a", "GIF89a"])
+    assert.equal(isSupportedImage(Buffer.from(header)), true);
+  for (const header of ["", "GIF", "GIF89", "GIF90a", "gif89a", "0000ftypmp42"])
+    assert.equal(isSupportedImage(Buffer.from(header)), false);
+});

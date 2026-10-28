@@ -30,7 +30,10 @@ export const favoriteInput = z.object({
 });
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 export function isSupportedImage(bytes: Uint8Array) {
+  const gifHeader = String.fromCharCode(...bytes.slice(0, 6));
   return (
+    gifHeader === "GIF87a" ||
+    gifHeader === "GIF89a" ||
     (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) ||
     (bytes[0] === 0x89 &&
       bytes[1] === 0x50 &&

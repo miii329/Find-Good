@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const bytes = Buffer.from(await file.arrayBuffer());
     if (!isSupportedImage(bytes))
       return Response.json(
-        { error: "JPEG・PNG・WebPの画像を選択してください。" },
+        { error: "JPEG・PNG・WebP・GIFの画像を選択してください。" },
         { status: 400 },
       );
     cloudinary.config({
@@ -68,8 +68,8 @@ export async function POST(request: Request) {
       const stream = cloudinary.uploader.upload_stream(
         {
           resource_type: "image",
-          folder: `designer-zukan/${session.user.id}`,
-          allowed_formats: ["jpg", "png", "webp"],
+          asset_folder: "find-good",
+          allowed_formats: ["jpg", "png", "webp", "gif"],
           overwrite: false,
         },
         (error, result) => {
