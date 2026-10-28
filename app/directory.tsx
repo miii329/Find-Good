@@ -555,7 +555,7 @@ export default function Directory() {
                     <MapPin size={13} />
                     {d.location}
                   </span>
-                  <span>{d.demo ? "DEMO PROFILE" : "MEMBER"}</span>
+                  <span>{d.demo ? "DEMO PROFILE" : d.isOwner ? "OWNER" : "MEMBER"}</span>
                   <ArrowUpRight size={17} />
                 </div>
               </article>

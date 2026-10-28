@@ -55,7 +55,7 @@ CLOUDINARY_API_KEY=あなたのapi_key
 CLOUDINARY_API_SECRET=あなたのapi_secret
 ```
 
-プロフィールフォームでJPEG / PNG / WebP（4MB以下）を選ぶと、認証済みのサーバーAPI経由でアップロードします。画像URL欄にも反映されるので、最後に「プロフィールを保存する」を押してください。Cloudinaryを未設定でも、画像URLを直接入力する方式は利用できます。
+プロフィールフォームでJPEG / PNG / WebP / GIF（アニメーション対応、4MB以下）を選ぶと、認証済みのサーバーAPI経由でアップロードします。画像URL欄にも反映されるので、最後に「プロフィールを保存する」を押してください。Cloudinaryを未設定でも、画像URLを直接入力する方式は利用できます。
 
 秘密鍵はサーバー側だけで使用します。`NEXT_PUBLIC_`を付けないでください。unsigned upload presetは不要です。
 

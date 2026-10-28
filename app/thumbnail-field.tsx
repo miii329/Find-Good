@@ -54,13 +54,13 @@ export default function ThumbnailField({
         画像をアップロード
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           disabled={uploading}
           onChange={onUpload}
         />
       </label>
       <p className={styles.help}>
-        JPEG・PNG・WebP／4MB以下。横長の画像がおすすめです。
+        JPEG・PNG・WebP・GIF／4MB以下。アニメーションGIFも使用できます。
       </p>
       <label>
         画像URLから設定（任意）

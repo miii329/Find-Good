@@ -1,3 +1,4 @@
+import { normalizeCategory } from "@/lib/categories";
 import { getRegistration } from "@/lib/registration-store";
 import { hasRole } from "@/lib/registration";
 import { auth, isAuthConfigured } from "@/auth";
@@ -13,9 +14,10 @@ export const dynamic = "force-dynamic";
 function publicProfile(p: typeof profiles.$inferSelect): Designer {
   return {
     id: p.id,
+    isOwner: isAdminId(p.owner, process.env.ADMIN_USER_IDS),
     name: p.name,
     english: p.english,
-    category: p.category,
+    category: normalizeCategory(p.category),
     location: p.location,
     bio: p.bio,
     skill: p.skill,

@@ -1,11 +1,5 @@
-export const categories = [
-  "すべて",
-  "ブランディング",
-  "Webデザイン",
-  "UI / UX",
-  "グラフィック",
-  "イラスト",
-];
+import { fieldCategories } from "@/lib/categories";
+export const categories = ["すべて", ...fieldCategories];
 export type Designer = {
   id: string;
   name: string;
@@ -21,6 +15,7 @@ export type Designer = {
   budget: string;
   url: string;
   demo?: boolean;
+  isOwner?: boolean;
 };
 export const demoDesigners: Designer[] = [
   {
