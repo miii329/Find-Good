@@ -1,34 +1,17 @@
-import { normalizeCategory } from "@/lib/categories";
 import { getRegistration } from "@/lib/registration-store";
 import { hasRole } from "@/lib/registration";
 import { auth, isAuthConfigured } from "@/auth";
 import { getDb } from "@/db";
 import { profiles, favorites } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
-import { demoDesigners, type Designer } from "@/app/data";
+import { eq, and } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
+import { demoDesigners } from "@/app/data";
 import { z } from "zod";
 import { profileInput, favoriteInput, isSameOrigin } from "@/lib/validation";
 import { isAdminId } from "@/lib/contact";
+import { publicProfile, PUBLIC_PROFILES_TAG } from "@/lib/public-profiles";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-function publicProfile(p: typeof profiles.$inferSelect): Designer {
-  return {
-    id: p.id,
-    isOwner: isAdminId(p.owner, process.env.ADMIN_USER_IDS),
-    name: p.name,
-    english: p.english,
-    category: normalizeCategory(p.category),
-    location: p.location,
-    bio: p.bio,
-    skill: p.skill,
-    tools: p.tools,
-    available: p.available,
-    image: p.image,
-    title: p.title,
-    budget: p.budget,
-    url: p.url,
-  };
-}
 export async function GET() {
   try {
     const configured = isAuthConfigured();
@@ -36,7 +19,6 @@ export async function GET() {
     if (!process.env.DATABASE_URL)
       return Response.json(
         {
-          profiles: [],
           favorites: [],
           mine: null,
           signedIn: false,
@@ -49,20 +31,22 @@ export async function GET() {
     const registration = session?.user.id
       ? await getRegistration(session.user.id)
       : undefined;
-    const rows = await db
-      .select()
-      .from(profiles)
-      .orderBy(asc(profiles.createdAt));
+    // 公開一覧はトップページのキャッシュから配る。ここではログイン中の本人の情報だけを返す。
+    const [mine] = session?.user.id
+      ? await db
+          .select()
+          .from(profiles)
+          .where(eq(profiles.owner, session.user.id))
+          .limit(1)
+      : [];
     const saved = session?.user.id
       ? await db
           .select()
           .from(favorites)
           .where(eq(favorites.owner, session.user.id))
       : [];
-    const mine = rows.find((p) => p.owner === session?.user.id);
     return Response.json(
       {
-        profiles: rows.map(publicProfile),
         favorites: saved.map((f) => f.designer),
         mine: mine ? publicProfile(mine) : null,
         signedIn: !!session?.user.id,
@@ -119,6 +103,7 @@ export async function POST(request: Request) {
         .values({ ...values, owner })
         .onConflictDoUpdate({ target: profiles.owner, set: values })
         .returning();
+      revalidateTag(PUBLIC_PROFILES_TAG, "max");
       return Response.json(publicProfile(saved));
     }
     if (body.action === "remove") {
@@ -131,6 +116,7 @@ export async function POST(request: Request) {
           db.delete(favorites).where(eq(favorites.designer, existing.id)),
           db.delete(profiles).where(eq(profiles.owner, owner)),
         ]);
+      if (existing) revalidateTag(PUBLIC_PROFILES_TAG, "max");
       return Response.json({ ok: true });
     }
     const { id, saved } = favoriteInput.parse(body);

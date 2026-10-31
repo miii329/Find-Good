@@ -27,7 +27,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { hasRole, type StoredRole } from "@/lib/registration";
 import { categories, demoDesigners, type Designer } from "./data";
-export default function Directory() {
+export default function Directory({
+  initialProfiles,
+}: {
+  /** サーバー側でキャッシュした公開プロフィール一覧。最初のHTMLに含まれる。 */
+  initialProfiles: Designer[];
+}) {
   const orbitPathId = useId();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -59,7 +64,10 @@ export default function Directory() {
   const [setupRequired, setSetupRequired] = useState(false),
     [uploadedImage, setUploadedImage] = useState<string | null>(null),
     [uploading, setUploading] = useState(false);
-  const [designers, setDesigners] = useState<Designer[]>(demoDesigners),
+  const [designers, setDesigners] = useState<Designer[]>(() => [
+      ...demoDesigners,
+      ...initialProfiles,
+    ]),
     [q, setQ] = useState(""),
     [category, setCategory] = useState("すべて"),
     [available, setAvailable] = useState(false),
@@ -78,7 +86,6 @@ export default function Directory() {
       .then((r) => {
         if (!r.ok) throw Error();
         return r.json() as Promise<{
-          profiles: Designer[];
           favorites: string[];
           signedIn: boolean;
           isAdmin: boolean;
@@ -88,7 +95,15 @@ export default function Directory() {
         }>;
       })
       .then((d) => {
-        setDesigners([...demoDesigners, ...d.profiles]);
+        // 一覧はキャッシュ済みのHTMLから来る。本人のプロフィールだけは最新を反映する
+        // （保存直後はキャッシュの作り直しが間に合っていないことがあるため）。
+        const own = d.mine;
+        if (own)
+          setDesigners((old) =>
+            old.some((p) => p.id === own.id)
+              ? old.map((p) => (p.id === own.id ? own : p))
+              : [...old, own],
+          );
         setFavorites(d.favorites);
         setUser(d.signedIn);
         setIsAdmin(d.signedIn && d.isAdmin === true);
