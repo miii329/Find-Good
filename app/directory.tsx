@@ -4,6 +4,12 @@ import Image from "next/image";
 import manifestoMotion from "./manifesto-motion.module.css";
 import modalLayout from "./modal-layout.module.css";
 import ThumbnailField from "./thumbnail-field";
+import {
+  clearDraft,
+  readDraft,
+  writeDraft,
+  type ProfileDraft,
+} from "./profile-draft";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
@@ -14,6 +20,7 @@ import {
   Bookmark,
   Plus,
   LogOut,
+  RotateCcw,
   MapPin,
   SlidersHorizontal,
   X,
@@ -43,6 +50,7 @@ export default function Directory({
     if (logoutPending.current) return;
     logoutPending.current = true;
     setLoggingOut(true);
+    clearDraft();
     try {
       await signOut({ redirectTo: "/" });
     } catch {
@@ -52,7 +60,7 @@ export default function Directory({
     }
   }
   function openRegistration() {
-    if (user && hasRole(accountRole, "creator")) setRegister(true);
+    if (user && hasRole(accountRole, "creator")) openEditor();
     else if (user && accountRole === "seeker") {
       setView("designers");
       setCategory("すべて");
@@ -61,7 +69,25 @@ export default function Directory({
   }
   const [setupRequired, setSetupRequired] = useState(false),
     [uploadedImage, setUploadedImage] = useState<string | null>(null),
-    [uploading, setUploading] = useState(false);
+    [uploading, setUploading] = useState(false),
+    [draft, setDraft] = useState<ProfileDraft | null>(null),
+    [formKey, setFormKey] = useState(0),
+    [draftNotice, setDraftNotice] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集フォームを開くときは、前回の下書きがあればそれを初期値にする。
+  function openEditor() {
+    const saved = readDraft();
+    setDraft(saved);
+    setDraftNotice(!!saved);
+    setRegister(true);
+  }
+  function discardDraft() {
+    clearDraft();
+    setDraft(null);
+    setDraftNotice(false);
+    setUploadedImage(null);
+    setFormKey((k) => k + 1);
+  }
   const [designers, setDesigners] = useState<Designer[]>(() => [
       ...demoDesigners,
       ...initialProfiles,
@@ -114,7 +140,7 @@ export default function Directory({
           hasRole(d.accountRole, "creator") &&
           url.searchParams.get("onboarding") === "1"
         ) {
-          setRegister(true);
+          openEditor();
           url.searchParams.delete("onboarding");
           window.history.replaceState(
             null,
@@ -273,6 +299,7 @@ export default function Directory({
       setFavorites((old) => old.filter((id) => id !== mine.id));
       setMine(null);
       setRegister(false);
+      clearDraft();
       setMessage("プロフィールを削除しました。");
     } catch {
       setMessage("削除できませんでした。もう一度お試しください。");
@@ -280,6 +307,12 @@ export default function Directory({
       setBusy(false);
     }
   }
+  // フォームの初期値。下書きがあれば保存済みのプロフィールより優先する。
+  const initial = draft ?? mine;
+  // 画像はフォームの入力イベントを通らずに変わる（アップロード・解除）ので、ここで下書きに残す。
+  useEffect(() => {
+    if (uploadedImage !== null && formRef.current) writeDraft(formRef.current);
+  }, [uploadedImage]);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -311,6 +344,7 @@ export default function Directory({
       setMine(d);
       setRegister(false);
       setUploadedImage(null);
+      clearDraft();
       setMessage("プロフィールを保存しました。Find Goodに掲載されています。");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "保存に失敗しました。");
@@ -781,14 +815,38 @@ export default function Directory({
               </Button>
             </div>
           ) : (
-            <form className="form" onSubmit={submit}>
+            <form
+              key={formKey}
+              ref={formRef}
+              className="form"
+              onSubmit={submit}
+              onChange={(e) => writeDraft(e.currentTarget)}
+            >
+              {draftNotice && (
+                <div className="draftnotice" role="status">
+                  <p className="draftnotice-title">
+                    <RotateCcw size={14} aria-hidden="true" />
+                    下書きを復元しました
+                  </p>
+                  <p>前回の入力途中の内容から再開しています。</p>
+                  <div className="draftnotice-actions">
+                    {/* 下書きはすでにフォームに入っているので、お知らせを閉じるだけ。 */}
+                    <button type="button" onClick={() => setDraftNotice(false)}>
+                      このまま続ける
+                    </button>
+                    <button type="button" onClick={discardDraft}>
+                      破棄して元に戻す
+                    </button>
+                  </div>
+                </div>
+              )}
               <label>
                 お名前
                 <input
                   name="name"
                   required
                   maxLength={40}
-                  defaultValue={mine?.name}
+                  defaultValue={initial?.name}
                   placeholder="山田 はな"
                 />
               </label>
@@ -800,7 +858,7 @@ export default function Directory({
                       type="checkbox"
                       name="categories"
                       value={c}
-                      defaultChecked={mine?.categories.includes(c)}
+                      defaultChecked={initial?.categories.includes(c)}
                     />
                     {c}
                   </label>
@@ -812,7 +870,7 @@ export default function Directory({
                   name="location"
                   required
                   maxLength={40}
-                  defaultValue={mine?.location}
+                  defaultValue={initial?.location}
                   placeholder="東京 / リモート"
                 />
               </label>
@@ -822,7 +880,7 @@ export default function Directory({
                   name="skill"
                   required
                   maxLength={80}
-                  defaultValue={mine?.skill}
+                  defaultValue={initial?.skill}
                   placeholder="想いを伝えるブランドづくり"
                 />
               </label>
@@ -832,7 +890,7 @@ export default function Directory({
                   name="bio"
                   required
                   maxLength={1000}
-                  defaultValue={mine?.bio}
+                  defaultValue={initial?.bio}
                 />
               </label>
               <div className="formrow">
@@ -841,7 +899,7 @@ export default function Directory({
                   <input
                     name="tools"
                     maxLength={100}
-                    defaultValue={mine?.tools}
+                    defaultValue={initial?.tools}
                     placeholder="Figma / Illustrator"
                   />
                 </label>
@@ -850,7 +908,7 @@ export default function Directory({
                   <input
                     name="budget"
                     maxLength={40}
-                    defaultValue={mine?.budget}
+                    defaultValue={initial?.budget}
                     placeholder="10万円〜 / 応相談"
                   />
                 </label>
@@ -861,11 +919,11 @@ export default function Directory({
                   name="title"
                   required
                   maxLength={100}
-                  defaultValue={mine?.title}
+                  defaultValue={initial?.title}
                 />
               </label>
               <ThumbnailField
-                value={uploadedImage ?? mine?.image ?? ""}
+                value={uploadedImage ?? initial?.image ?? ""}
                 uploading={uploading}
                 onChange={setUploadedImage}
                 onUpload={uploadImage}
@@ -876,7 +934,7 @@ export default function Directory({
                   name="url"
                   type="url"
                   required
-                  defaultValue={mine?.url}
+                  defaultValue={initial?.url}
                   placeholder="https://…"
                 />
               </label>
@@ -884,7 +942,7 @@ export default function Directory({
                 <input
                   type="checkbox"
                   name="available"
-                  defaultChecked={mine?.available ?? true}
+                  defaultChecked={initial?.available ?? true}
                 />
                 お仕事の相談を受け付ける
               </label>
