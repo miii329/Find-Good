@@ -673,6 +673,21 @@ export default function Directory({
                   <dt>お仕事</dt>
                   <dd>{selected.available ? "相談受付中" : "受付休止中"}</dd>
                 </div>
+                {selected.url && (
+                  <div>
+                    <dt>ポートフォリオ</dt>
+                    <dd>
+                      <a
+                        href={selected.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="break-all underline underline-offset-2"
+                      >
+                        {selected.url}
+                      </a>
+                    </dd>
+                  </div>
+                )}
               </dl>
               <div className="detailactions">
                 <Button
