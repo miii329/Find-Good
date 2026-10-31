@@ -7,6 +7,9 @@ export const fieldCategories = [
   "映像・動画",
   "ヘアデザイン",
   "インテリア",
+  "コンサルティング",
+  "プロデュース",
+  "ディレクション",
   "その他",
 ] as const;
 export function normalizeCategory(category: string): string {
