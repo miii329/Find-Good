@@ -549,15 +549,18 @@ h1 > span:after {
 .bookmark.saved {
   background: #c6f36b;
 }
+.worklabels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
 .worklabel {
-  position: absolute;
-  bottom: 14px;
-  left: 15px;
   font-size: 11px;
-  background: #fffe;
-  border-radius: 3px;
-  padding: 5px 9px;
-  pointer-events: none;
+  color: #424a3b;
+  border: 1px solid #c9cebf;
+  border-radius: 999px;
+  padding: 3px 10px;
 }
 .profileline {
   display: flex;

@@ -549,10 +549,9 @@ export default function Directory({
                       fill={favorites.includes(d.id) ? "currentColor" : "none"}
                     />
                   </button>
-                  <span className="worklabel">{d.categories.join(" / ")}</span>
                 </div>
                 <div className="profileline">
-                  <button className="person" onClick={() => setSelected(d)}>
+                  <div className="person">
                     <span
                       className={"avatar avatar-" + (designers.indexOf(d) % 3)}
                     >
@@ -562,7 +561,7 @@ export default function Directory({
                       <strong>{d.name}</strong>
                       <small>{d.english || "INDEPENDENT DESIGNER"}</small>
                     </span>
-                  </button>
+                  </div>
                   <span className="status">
                     {d.available ? (
                       <>
@@ -573,6 +572,13 @@ export default function Directory({
                       "現在受付休止中"
                     )}
                   </span>
+                </div>
+                <div className="worklabels">
+                  {d.categories.map((c) => (
+                    <span key={c} className="worklabel">
+                      {c}
+                    </span>
+                  ))}
                 </div>
                 {view === "works" ? (
                   <button className="worktitle" onClick={() => setSelected(d)}>
