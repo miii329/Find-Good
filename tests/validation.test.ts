@@ -8,7 +8,7 @@ import {
 } from "../lib/validation";
 const sample = {
   name: "山田 はな",
-  category: "UI / UX",
+  categories: ["UI / UX"],
   location: "東京",
   skill: "情報設計",
   bio: "自己紹介",
@@ -35,7 +35,8 @@ test("reject unsafe URLs, blank names and unknown categories", () => {
     { url: "javascript:alert(1)" },
     { image: "data:image/svg+xml;base64,aaa" },
     { name: " " },
-    { category: "unknown" },
+    { categories: ["unknown"] },
+    { categories: [] },
   ])
     assert.equal(
       profileInput.safeParse({ ...sample, ...patch }).success,

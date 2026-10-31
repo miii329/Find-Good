@@ -1,4 +1,4 @@
-import { normalizeCategory } from "@/lib/categories";
+import { parseCategories } from "@/lib/categories";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, isAuthConfigured } from "@/auth";
@@ -130,7 +130,9 @@ export default async function RequestsPage({
                   })}
                 </time>
               </div>
-              <p className={styles.category}>{normalizeCategory(row.category)}</p>
+              <p className={styles.category}>
+                {parseCategories(row.category).join(" / ")}
+              </p>
               <h2>{row.creator}さんに会いたい</h2>
               <p className={styles.description}>{descriptions[row.status]}</p>
               <details>

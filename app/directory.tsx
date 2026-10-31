@@ -4,6 +4,12 @@ import Image from "next/image";
 import manifestoMotion from "./manifesto-motion.module.css";
 import modalLayout from "./modal-layout.module.css";
 import ThumbnailField from "./thumbnail-field";
+import {
+  clearDraft,
+  readDraft,
+  writeDraft,
+  type ProfileDraft,
+} from "./profile-draft";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
@@ -14,6 +20,7 @@ import {
   Bookmark,
   Plus,
   LogOut,
+  RotateCcw,
   MapPin,
   SlidersHorizontal,
   X,
@@ -27,19 +34,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { hasRole, type StoredRole } from "@/lib/registration";
 import { categories, demoDesigners, type Designer } from "./data";
-export default function Directory() {
+export default function Directory({
+  initialProfiles,
+}: {
+  /** サーバー側でキャッシュした公開プロフィール一覧。最初のHTMLに含まれる。 */
+  initialProfiles: Designer[];
+}) {
   const orbitPathId = useId();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [accountRole, setAccountRole] = useState<StoredRole | null>(
-    null,
-  );
+  const [accountRole, setAccountRole] = useState<StoredRole | null>(null);
   const logoutPending = useRef(false);
   const [loggingOut, setLoggingOut] = useState(false);
   async function handleLogout() {
     if (logoutPending.current) return;
     logoutPending.current = true;
     setLoggingOut(true);
+    clearDraft();
     try {
       await signOut({ redirectTo: "/" });
     } catch {
@@ -49,7 +60,7 @@ export default function Directory() {
     }
   }
   function openRegistration() {
-    if (user && hasRole(accountRole, "creator")) setRegister(true);
+    if (user && hasRole(accountRole, "creator")) openEditor();
     else if (user && accountRole === "seeker") {
       setView("designers");
       setCategory("すべて");
@@ -58,8 +69,29 @@ export default function Directory() {
   }
   const [setupRequired, setSetupRequired] = useState(false),
     [uploadedImage, setUploadedImage] = useState<string | null>(null),
-    [uploading, setUploading] = useState(false);
-  const [designers, setDesigners] = useState<Designer[]>(demoDesigners),
+    [uploading, setUploading] = useState(false),
+    [draft, setDraft] = useState<ProfileDraft | null>(null),
+    [formKey, setFormKey] = useState(0),
+    [draftNotice, setDraftNotice] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  // 編集フォームを開くときは、前回の下書きがあればそれを初期値にする。
+  function openEditor() {
+    const saved = readDraft();
+    setDraft(saved);
+    setDraftNotice(!!saved);
+    setRegister(true);
+  }
+  function discardDraft() {
+    clearDraft();
+    setDraft(null);
+    setDraftNotice(false);
+    setUploadedImage(null);
+    setFormKey((k) => k + 1);
+  }
+  const [designers, setDesigners] = useState<Designer[]>(() => [
+      ...demoDesigners,
+      ...initialProfiles,
+    ]),
     [q, setQ] = useState(""),
     [category, setCategory] = useState("すべて"),
     [available, setAvailable] = useState(false),
@@ -78,7 +110,6 @@ export default function Directory() {
       .then((r) => {
         if (!r.ok) throw Error();
         return r.json() as Promise<{
-          profiles: Designer[];
           favorites: string[];
           signedIn: boolean;
           isAdmin: boolean;
@@ -88,7 +119,15 @@ export default function Directory() {
         }>;
       })
       .then((d) => {
-        setDesigners([...demoDesigners, ...d.profiles]);
+        // 一覧はキャッシュ済みのHTMLから来る。本人のプロフィールだけは最新を反映する
+        // （保存直後はキャッシュの作り直しが間に合っていないことがあるため）。
+        const own = d.mine;
+        if (own)
+          setDesigners((old) =>
+            old.some((p) => p.id === own.id)
+              ? old.map((p) => (p.id === own.id ? own : p))
+              : [...old, own],
+          );
         setFavorites(d.favorites);
         setUser(d.signedIn);
         setIsAdmin(d.signedIn && d.isAdmin === true);
@@ -101,7 +140,7 @@ export default function Directory() {
           hasRole(d.accountRole, "creator") &&
           url.searchParams.get("onboarding") === "1"
         ) {
-          setRegister(true);
+          openEditor();
           url.searchParams.delete("onboarding");
           window.history.replaceState(
             null,
@@ -176,10 +215,10 @@ export default function Directory() {
   }, []);
   const filtered = designers.filter(
     (d) =>
-      (category === "すべて" || d.category === category) &&
+      (category === "すべて" || d.categories.includes(category)) &&
       (!available || d.available) &&
       (view !== "saved" || favorites.includes(d.id)) &&
-      `${d.name} ${d.category} ${d.location} ${d.skill} ${d.title} ${d.tools}`
+      `${d.name} ${d.categories.join(" ")} ${d.location} ${d.skill} ${d.title} ${d.tools}`
         .toLowerCase()
         .includes(q.toLowerCase()),
   );
@@ -260,6 +299,7 @@ export default function Directory() {
       setFavorites((old) => old.filter((id) => id !== mine.id));
       setMine(null);
       setRegister(false);
+      clearDraft();
       setMessage("プロフィールを削除しました。");
     } catch {
       setMessage("削除できませんでした。もう一度お試しください。");
@@ -267,10 +307,22 @@ export default function Directory() {
       setBusy(false);
     }
   }
+  // フォームの初期値。下書きがあれば保存済みのプロフィールより優先する。
+  const initial = draft ?? mine;
+  // 画像はフォームの入力イベントを通らずに変わる（アップロード・解除）ので、ここで下書きに残す。
+  useEffect(() => {
+    if (uploadedImage !== null && formRef.current) writeDraft(formRef.current);
+  }, [uploadedImage]);
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    // チェックボックスの組は required で必須にできないので、ここで確かめる。
+    if (!form.getAll("categories").length) {
+      setMessage("ジャンルを1つ以上選んでください。");
+      return;
+    }
     setBusy(true);
-    const data = Object.fromEntries(new FormData(e.currentTarget));
+    const data = Object.fromEntries(form);
     try {
       const r = await fetch("/api/directory", {
         method: "POST",
@@ -278,6 +330,7 @@ export default function Directory() {
         body: JSON.stringify({
           action: "profile",
           ...data,
+          categories: form.getAll("categories"),
           available: data.available === "on",
         }),
       });
@@ -291,6 +344,7 @@ export default function Directory() {
       setMine(d);
       setRegister(false);
       setUploadedImage(null);
+      clearDraft();
       setMessage("プロフィールを保存しました。Find Goodに掲載されています。");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "保存に失敗しました。");
@@ -337,13 +391,17 @@ export default function Directory() {
             <span>{favorites.length.toString().padStart(2, "0")}</span>
           </button>
           {user && hasRole(accountRole, "seeker") && (
-            <Link href="/requests" className="header-requests-link">申請状況</Link>
+            <Link href="/requests" className="header-requests-link">
+              申請状況
+            </Link>
           )}
         </nav>
         <div className="header-account-actions">
           {user && isAdmin && (
             <Button asChild variant="outline">
-              <Link className="header-admin-link" href="/admin">管理画面へ <ArrowRight size={16} aria-hidden="true" /></Link>
+              <Link className="header-admin-link" href="/admin">
+                管理画面へ <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </Button>
           )}
           <Button
@@ -370,7 +428,6 @@ export default function Directory() {
               {loggingOut ? "ログアウト中…" : "ログアウト"}
             </button>
           )}
-
         </div>
       </header>
       <main>
@@ -396,7 +453,10 @@ export default function Directory() {
             </h1>
             <p>あなたの「いいな」が、誰かの仕事になる。</p>
           </div>
-          <button className={`manifesto ${manifestoMotion.card}`} onClick={() => setAbout(true)}>
+          <button
+            className={`manifesto ${manifestoMotion.card}`}
+            onClick={() => setAbout(true)}
+          >
             <span>
               つくる人に、
               <br />
@@ -523,10 +583,9 @@ export default function Directory() {
                       fill={favorites.includes(d.id) ? "currentColor" : "none"}
                     />
                   </button>
-                  <span className="worklabel">{d.category}</span>
                 </div>
                 <div className="profileline">
-                  <button className="person" onClick={() => setSelected(d)}>
+                  <div className="person">
                     <span
                       className={"avatar avatar-" + (designers.indexOf(d) % 3)}
                     >
@@ -536,7 +595,7 @@ export default function Directory() {
                       <strong>{d.name}</strong>
                       <small>{d.english || "INDEPENDENT DESIGNER"}</small>
                     </span>
-                  </button>
+                  </div>
                   <span className="status">
                     {d.available ? (
                       <>
@@ -547,6 +606,13 @@ export default function Directory() {
                       "現在受付休止中"
                     )}
                   </span>
+                </div>
+                <div className="worklabels">
+                  {d.categories.map((c) => (
+                    <span key={c} className="worklabel">
+                      {c}
+                    </span>
+                  ))}
                 </div>
                 {view === "works" ? (
                   <button className="worktitle" onClick={() => setSelected(d)}>
@@ -560,7 +626,9 @@ export default function Directory() {
                     <MapPin size={13} />
                     {d.location}
                   </span>
-                  <span>{d.demo ? "DEMO PROFILE" : d.isOwner ? "OWNER" : "MEMBER"}</span>
+                  <span>
+                    {d.demo ? "DEMO PROFILE" : d.isOwner ? "OWNER" : "MEMBER"}
+                  </span>
                   <ArrowUpRight size={17} />
                 </div>
               </article>
@@ -626,7 +694,7 @@ export default function Directory() {
             <>
               <DialogTitle>{selected.name}</DialogTitle>
               <DialogDescription>
-                {selected.category} ・ {selected.location}{" "}
+                {selected.categories.join(" / ")} ・ {selected.location}{" "}
                 {selected.demo ? "／ サンプルプロフィール" : ""}
               </DialogDescription>
               {selected.image && (
@@ -640,7 +708,7 @@ export default function Directory() {
                 />
               )}
               <h3>{selected.title}</h3>
-              <p>{selected.bio}</p>
+              <p className="whitespace-pre-line">{selected.bio}</p>
               <dl className="facts">
                 <div>
                   <dt>得意技</dt>
@@ -658,6 +726,21 @@ export default function Directory() {
                   <dt>お仕事</dt>
                   <dd>{selected.available ? "相談受付中" : "受付休止中"}</dd>
                 </div>
+                {selected.url && (
+                  <div>
+                    <dt>ポートフォリオ</dt>
+                    <dd>
+                      <a
+                        href={selected.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="break-all underline underline-offset-2"
+                      >
+                        {selected.url}
+                      </a>
+                    </dd>
+                  </div>
+                )}
               </dl>
               <div className="detailactions">
                 <Button
@@ -703,7 +786,9 @@ export default function Directory() {
           if (!o) setUploadedImage(null);
         }}
       >
-        <DialogContent className={`modal registration-modal ${modalLayout.vertical}`}>
+        <DialogContent
+          className={`modal registration-modal ${modalLayout.vertical}`}
+        >
           <DialogTitle>
             {mine ? "プロフィールを編集" : "あなたの得意を、Find Goodに。"}
           </DialogTitle>
@@ -730,44 +815,72 @@ export default function Directory() {
               </Button>
             </div>
           ) : (
-            <form className="form" onSubmit={submit}>
+            <form
+              key={formKey}
+              ref={formRef}
+              className="form"
+              onSubmit={submit}
+              onChange={(e) => writeDraft(e.currentTarget)}
+            >
+              {draftNotice && (
+                <div className="draftnotice" role="status">
+                  <p className="draftnotice-title">
+                    <RotateCcw size={14} aria-hidden="true" />
+                    下書きを復元しました
+                  </p>
+                  <p>前回の入力途中の内容から再開しています。</p>
+                  <div className="draftnotice-actions">
+                    {/* 下書きはすでにフォームに入っているので、お知らせを閉じるだけ。 */}
+                    <button type="button" onClick={() => setDraftNotice(false)}>
+                      このまま続ける
+                    </button>
+                    <button type="button" onClick={discardDraft}>
+                      破棄して元に戻す
+                    </button>
+                  </div>
+                </div>
+              )}
               <label>
                 お名前
                 <input
                   name="name"
                   required
                   maxLength={40}
-                  defaultValue={mine?.name}
+                  defaultValue={initial?.name}
                   placeholder="山田 はな"
                 />
               </label>
-              <div className="formrow">
-                <label>
-                  ジャンル
-                  <select name="category" defaultValue={mine?.category}>
-                    {categories.slice(1).map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  活動拠点
-                  <input
-                    name="location"
-                    required
-                    maxLength={40}
-                    defaultValue={mine?.location}
-                    placeholder="東京 / リモート"
-                  />
-                </label>
-              </div>
+              <fieldset className="categorypicker">
+                <legend>ジャンル（複数選択可）</legend>
+                {categories.slice(1).map((c) => (
+                  <label key={c} className="checkline">
+                    <input
+                      type="checkbox"
+                      name="categories"
+                      value={c}
+                      defaultChecked={initial?.categories.includes(c)}
+                    />
+                    {c}
+                  </label>
+                ))}
+              </fieldset>
+              <label>
+                活動拠点
+                <input
+                  name="location"
+                  required
+                  maxLength={40}
+                  defaultValue={initial?.location}
+                  placeholder="東京 / リモート"
+                />
+              </label>
               <label>
                 得意なこと
                 <input
                   name="skill"
                   required
                   maxLength={80}
-                  defaultValue={mine?.skill}
+                  defaultValue={initial?.skill}
                   placeholder="想いを伝えるブランドづくり"
                 />
               </label>
@@ -777,7 +890,7 @@ export default function Directory() {
                   name="bio"
                   required
                   maxLength={1000}
-                  defaultValue={mine?.bio}
+                  defaultValue={initial?.bio}
                 />
               </label>
               <div className="formrow">
@@ -786,7 +899,7 @@ export default function Directory() {
                   <input
                     name="tools"
                     maxLength={100}
-                    defaultValue={mine?.tools}
+                    defaultValue={initial?.tools}
                     placeholder="Figma / Illustrator"
                   />
                 </label>
@@ -795,7 +908,7 @@ export default function Directory() {
                   <input
                     name="budget"
                     maxLength={40}
-                    defaultValue={mine?.budget}
+                    defaultValue={initial?.budget}
                     placeholder="10万円〜 / 応相談"
                   />
                 </label>
@@ -806,11 +919,11 @@ export default function Directory() {
                   name="title"
                   required
                   maxLength={100}
-                  defaultValue={mine?.title}
+                  defaultValue={initial?.title}
                 />
               </label>
               <ThumbnailField
-                value={uploadedImage ?? mine?.image ?? ""}
+                value={uploadedImage ?? initial?.image ?? ""}
                 uploading={uploading}
                 onChange={setUploadedImage}
                 onUpload={uploadImage}
@@ -821,7 +934,7 @@ export default function Directory() {
                   name="url"
                   type="url"
                   required
-                  defaultValue={mine?.url}
+                  defaultValue={initial?.url}
                   placeholder="https://…"
                 />
               </label>
@@ -829,7 +942,7 @@ export default function Directory() {
                 <input
                   type="checkbox"
                   name="available"
-                  defaultChecked={mine?.available ?? true}
+                  defaultChecked={initial?.available ?? true}
                 />
                 お仕事の相談を受け付ける
               </label>
@@ -862,17 +975,25 @@ export default function Directory() {
         <DialogContent className="modal about">
           <div className="about-heading">
             <DialogTitle>
-              つくる人に、<br />
+              つくる人に、
+              <br />
               もっと出会いを。
             </DialogTitle>
             <DialogDescription>FIND GOOD</DialogDescription>
             <div className="about-orbit" aria-hidden="true">
               <svg viewBox="0 0 160 160">
                 <defs>
-                  <path id={orbitPathId} d="M80,80 m-62,0 a62,62 0 1,1 124,0 a62,62 0 1,1 -124,0" />
+                  <path
+                    id={orbitPathId}
+                    d="M80,80 m-62,0 a62,62 0 1,1 124,0 a62,62 0 1,1 -124,0"
+                  />
                 </defs>
                 <text>
-                  <textPath href={`#${orbitPathId}`} textLength="389" lengthAdjust="spacing">
+                  <textPath
+                    href={`#${orbitPathId}`}
+                    textLength="389"
+                    lengthAdjust="spacing"
+                  >
                     FIND GOOD · GOOD PEOPLE, GOOD CONNECTIONS ·{" "}
                   </textPath>
                 </text>
@@ -888,9 +1009,7 @@ export default function Directory() {
             <p>
               単に仕事を依頼するだけでなく、あなたがその人の感性や、生み出す作品に惚れ込める、あなたにとってそんなパートナーが見つかることを願っています。
             </p>
-            <p>
-              掲載は無料。中の人が責任を持って繋ぎます。
-            </p>
+            <p>掲載は無料。中の人が責任を持って繋ぎます。</p>
             <Button
               onClick={() => {
                 setAbout(false);
