@@ -655,7 +655,7 @@ export default function Directory({
                 />
               )}
               <h3>{selected.title}</h3>
-              <p>{selected.bio}</p>
+              <p className="whitespace-pre-line">{selected.bio}</p>
               <dl className="facts">
                 <div>
                   <dt>得意技</dt>
