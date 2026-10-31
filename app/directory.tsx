@@ -36,9 +36,7 @@ export default function Directory({
   const orbitPathId = useId();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [accountRole, setAccountRole] = useState<StoredRole | null>(
-    null,
-  );
+  const [accountRole, setAccountRole] = useState<StoredRole | null>(null);
   const logoutPending = useRef(false);
   const [loggingOut, setLoggingOut] = useState(false);
   async function handleLogout() {
@@ -191,10 +189,10 @@ export default function Directory({
   }, []);
   const filtered = designers.filter(
     (d) =>
-      (category === "すべて" || d.category === category) &&
+      (category === "すべて" || d.categories.includes(category)) &&
       (!available || d.available) &&
       (view !== "saved" || favorites.includes(d.id)) &&
-      `${d.name} ${d.category} ${d.location} ${d.skill} ${d.title} ${d.tools}`
+      `${d.name} ${d.categories.join(" ")} ${d.location} ${d.skill} ${d.title} ${d.tools}`
         .toLowerCase()
         .includes(q.toLowerCase()),
   );
@@ -284,8 +282,14 @@ export default function Directory({
   }
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    // チェックボックスの組は required で必須にできないので、ここで確かめる。
+    if (!form.getAll("categories").length) {
+      setMessage("ジャンルを1つ以上選んでください。");
+      return;
+    }
     setBusy(true);
-    const data = Object.fromEntries(new FormData(e.currentTarget));
+    const data = Object.fromEntries(form);
     try {
       const r = await fetch("/api/directory", {
         method: "POST",
@@ -293,6 +297,7 @@ export default function Directory({
         body: JSON.stringify({
           action: "profile",
           ...data,
+          categories: form.getAll("categories"),
           available: data.available === "on",
         }),
       });
@@ -352,13 +357,17 @@ export default function Directory({
             <span>{favorites.length.toString().padStart(2, "0")}</span>
           </button>
           {user && hasRole(accountRole, "seeker") && (
-            <Link href="/requests" className="header-requests-link">申請状況</Link>
+            <Link href="/requests" className="header-requests-link">
+              申請状況
+            </Link>
           )}
         </nav>
         <div className="header-account-actions">
           {user && isAdmin && (
             <Button asChild variant="outline">
-              <Link className="header-admin-link" href="/admin">管理画面へ <ArrowRight size={16} aria-hidden="true" /></Link>
+              <Link className="header-admin-link" href="/admin">
+                管理画面へ <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </Button>
           )}
           <Button
@@ -385,7 +394,6 @@ export default function Directory({
               {loggingOut ? "ログアウト中…" : "ログアウト"}
             </button>
           )}
-
         </div>
       </header>
       <main>
@@ -411,7 +419,10 @@ export default function Directory({
             </h1>
             <p>あなたの「いいな」が、誰かの仕事になる。</p>
           </div>
-          <button className={`manifesto ${manifestoMotion.card}`} onClick={() => setAbout(true)}>
+          <button
+            className={`manifesto ${manifestoMotion.card}`}
+            onClick={() => setAbout(true)}
+          >
             <span>
               つくる人に、
               <br />
@@ -538,7 +549,7 @@ export default function Directory({
                       fill={favorites.includes(d.id) ? "currentColor" : "none"}
                     />
                   </button>
-                  <span className="worklabel">{d.category}</span>
+                  <span className="worklabel">{d.categories.join(" / ")}</span>
                 </div>
                 <div className="profileline">
                   <button className="person" onClick={() => setSelected(d)}>
@@ -575,7 +586,9 @@ export default function Directory({
                     <MapPin size={13} />
                     {d.location}
                   </span>
-                  <span>{d.demo ? "DEMO PROFILE" : d.isOwner ? "OWNER" : "MEMBER"}</span>
+                  <span>
+                    {d.demo ? "DEMO PROFILE" : d.isOwner ? "OWNER" : "MEMBER"}
+                  </span>
                   <ArrowUpRight size={17} />
                 </div>
               </article>
@@ -641,7 +654,7 @@ export default function Directory({
             <>
               <DialogTitle>{selected.name}</DialogTitle>
               <DialogDescription>
-                {selected.category} ・ {selected.location}{" "}
+                {selected.categories.join(" / ")} ・ {selected.location}{" "}
                 {selected.demo ? "／ サンプルプロフィール" : ""}
               </DialogDescription>
               {selected.image && (
@@ -733,7 +746,9 @@ export default function Directory({
           if (!o) setUploadedImage(null);
         }}
       >
-        <DialogContent className={`modal registration-modal ${modalLayout.vertical}`}>
+        <DialogContent
+          className={`modal registration-modal ${modalLayout.vertical}`}
+        >
           <DialogTitle>
             {mine ? "プロフィールを編集" : "あなたの得意を、Find Goodに。"}
           </DialogTitle>
@@ -771,26 +786,30 @@ export default function Directory({
                   placeholder="山田 はな"
                 />
               </label>
-              <div className="formrow">
-                <label>
-                  ジャンル
-                  <select name="category" defaultValue={mine?.category}>
-                    {categories.slice(1).map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  活動拠点
-                  <input
-                    name="location"
-                    required
-                    maxLength={40}
-                    defaultValue={mine?.location}
-                    placeholder="東京 / リモート"
-                  />
-                </label>
-              </div>
+              <fieldset className="categorypicker">
+                <legend>ジャンル（複数選択可）</legend>
+                {categories.slice(1).map((c) => (
+                  <label key={c} className="checkline">
+                    <input
+                      type="checkbox"
+                      name="categories"
+                      value={c}
+                      defaultChecked={mine?.categories.includes(c)}
+                    />
+                    {c}
+                  </label>
+                ))}
+              </fieldset>
+              <label>
+                活動拠点
+                <input
+                  name="location"
+                  required
+                  maxLength={40}
+                  defaultValue={mine?.location}
+                  placeholder="東京 / リモート"
+                />
+              </label>
               <label>
                 得意なこと
                 <input
@@ -892,17 +911,25 @@ export default function Directory({
         <DialogContent className="modal about">
           <div className="about-heading">
             <DialogTitle>
-              つくる人に、<br />
+              つくる人に、
+              <br />
               もっと出会いを。
             </DialogTitle>
             <DialogDescription>FIND GOOD</DialogDescription>
             <div className="about-orbit" aria-hidden="true">
               <svg viewBox="0 0 160 160">
                 <defs>
-                  <path id={orbitPathId} d="M80,80 m-62,0 a62,62 0 1,1 124,0 a62,62 0 1,1 -124,0" />
+                  <path
+                    id={orbitPathId}
+                    d="M80,80 m-62,0 a62,62 0 1,1 124,0 a62,62 0 1,1 -124,0"
+                  />
                 </defs>
                 <text>
-                  <textPath href={`#${orbitPathId}`} textLength="389" lengthAdjust="spacing">
+                  <textPath
+                    href={`#${orbitPathId}`}
+                    textLength="389"
+                    lengthAdjust="spacing"
+                  >
                     FIND GOOD · GOOD PEOPLE, GOOD CONNECTIONS ·{" "}
                   </textPath>
                 </text>
@@ -918,9 +945,7 @@ export default function Directory({
             <p>
               単に仕事を依頼するだけでなく、あなたがその人の感性や、生み出す作品に惚れ込める、あなたにとってそんなパートナーが見つかることを願っています。
             </p>
-            <p>
-              掲載は無料。中の人が責任を持って繋ぎます。
-            </p>
+            <p>掲載は無料。中の人が責任を持って繋ぎます。</p>
             <Button
               onClick={() => {
                 setAbout(false);

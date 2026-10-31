@@ -9,6 +9,7 @@ import { demoDesigners } from "@/app/data";
 import { z } from "zod";
 import { profileInput, favoriteInput, isSameOrigin } from "@/lib/validation";
 import { isAdminId } from "@/lib/contact";
+import { CATEGORY_SEPARATOR } from "@/lib/categories";
 import { publicProfile, PUBLIC_PROFILES_TAG } from "@/lib/public-profiles";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,9 +93,10 @@ export async function POST(request: Request) {
           { error: "作品の掲載にはクリエイター登録が必要です。" },
           { status: 403 },
         );
-      const input = profileInput.parse(body);
+      const { categories, ...input } = profileInput.parse(body);
       const values = {
         ...input,
+        category: categories.join(CATEGORY_SEPARATOR),
         budget: input.budget || "応相談",
         updatedAt: new Date(),
       };

@@ -1374,3 +1374,18 @@ footer small {
     font-size: 22px;
   }
 }
+.categorypicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.categorypicker > legend {
+  width: 100%;
+  margin-bottom: 7px;
+  font-size: 14px;
+  font-weight: 550;
+}

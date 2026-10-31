@@ -10,9 +10,21 @@ export const httpUrl = z
   );
 export const profileInput = z.object({
   name: z.string().trim().min(1).max(40),
-  category: z.preprocess(
-    value => typeof value === "string" ? normalizeCategory(value) : value,
-    z.enum(fieldCategories),
+  categories: z.preprocess(
+    (value) =>
+      Array.isArray(value)
+        ? [
+            ...new Set(
+              value.map((c) =>
+                typeof c === "string" ? normalizeCategory(c) : c,
+              ),
+            ),
+          ]
+        : value,
+    z
+      .array(z.enum(fieldCategories))
+      .min(1, "ジャンルを1つ以上選んでください")
+      .max(fieldCategories.length),
   ),
   location: z.string().trim().min(1).max(40),
   skill: z.string().trim().min(1).max(80),

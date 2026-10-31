@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { asc } from "drizzle-orm";
 import { getDb } from "@/db";
 import { profiles } from "@/db/schema";
-import { normalizeCategory } from "@/lib/categories";
+import { parseCategories } from "@/lib/categories";
 import { isAdminId } from "@/lib/contact";
 import type { Designer } from "@/app/data";
 
@@ -16,7 +16,7 @@ export function publicProfile(p: typeof profiles.$inferSelect): Designer {
     isOwner: isAdminId(p.owner, process.env.ADMIN_USER_IDS),
     name: p.name,
     english: p.english,
-    category: normalizeCategory(p.category),
+    categories: parseCategories(p.category),
     location: p.location,
     bio: p.bio,
     skill: p.skill,
@@ -44,6 +44,7 @@ export const getPublicProfiles = unstable_cache(
       .orderBy(asc(profiles.createdAt));
     return rows.map(publicProfile);
   },
-  ["public-profiles"],
+  // Designer の形を変えたら版を上げる。古い形のキャッシュを読まないようにするため。
+  ["public-profiles", "v2"],
   { tags: [PUBLIC_PROFILES_TAG], revalidate: 86400 },
 );
